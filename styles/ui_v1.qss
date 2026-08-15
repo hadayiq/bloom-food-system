@@ -1,0 +1,318 @@
+/* =========================================================
+   BLOOM FOOD — UI V1 POLISH LAYER
+   UI ONLY — no business logic changes
+   ========================================================= */
+
+/* ---------- Application surface ---------- */
+QWidget {
+    font-family: "Segoe UI";
+}
+
+QScrollArea,
+QScrollArea > QWidget > QWidget {
+    background: transparent;
+    border: none;
+}
+
+/* ---------- Dashboard ---------- */
+QLabel#dashboard_title,
+QLabel#page_title {
+    color: #2F6338;
+    font-size: 29pt;
+    font-weight: 800;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+QLabel#dashboard_subtitle,
+QLabel#page_subtitle {
+    color: #7B877F;
+    font-size: 11pt;
+    font-weight: 400;
+    background: transparent;
+    padding: 0;
+}
+
+QLabel#dashboard_section_title,
+QLabel#section_title {
+    color: #2D3A32;
+    font-size: 14pt;
+    font-weight: 700;
+    background: transparent;
+}
+
+/* ---------- Sidebar ---------- */
+QFrame#sidebar {
+    background: #FFFFFF;
+    border-right: 1px solid #DDE6DE;
+}
+
+QPushButton#sidebar_button {
+    min-height: 46px;
+    border-radius: 11px;
+    padding: 10px 15px;
+    color: #526158;
+    background: transparent;
+    font-size: 10.5pt;
+    font-weight: 600;
+    text-align: right;
+}
+
+QPushButton#sidebar_button:hover {
+    background: #EEF6EE;
+    color: #2F6B37;
+}
+
+QPushButton#sidebar_button[active="true"] {
+    background: #438E46;
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+QPushButton#sidebar_button[active="true"]:hover {
+    background: #397A3C;
+}
+
+QLabel#company_name {
+    color: #438E46;
+    font-size: 20pt;
+    font-weight: 800;
+}
+
+QLabel#company_subtitle,
+QLabel#sidebar_footer {
+    color: #89958D;
+}
+
+/* ---------- KPI / Cards ---------- */
+QFrame#kpi_card,
+QFrame#summary_card,
+QFrame#transaction_card {
+    background: #FFFFFF;
+    border: 1px solid #DFE7E0;
+}
+
+QFrame#kpi_card:hover,
+QFrame#summary_card:hover,
+QFrame#transaction_card:hover {
+    border-color: #B7CFB9;
+}
+
+QLabel#kpi_title,
+QLabel#card_title {
+    color: #68766E;
+    font-weight: 600;
+}
+
+QLabel#kpi_value,
+QLabel#products_value,
+QLabel#in_value,
+QLabel#out_value,
+QLabel#balance_value {
+    font-weight: 800;
+}
+
+/* ---------- Forms ---------- */
+QLabel#form_label {
+    color: #394A40;
+    font-weight: 600;
+}
+
+QLineEdit,
+QComboBox,
+QTextEdit,
+QDateEdit,
+QSpinBox,
+QDoubleSpinBox {
+    background: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #D4DED6;
+    border-radius: 9px;
+    padding: 8px 12px;
+    selection-background-color: #DDEEDC;
+    selection-color: #243B27;
+}
+
+QLineEdit:hover,
+QComboBox:hover,
+QTextEdit:hover,
+QDateEdit:hover,
+QSpinBox:hover,
+QDoubleSpinBox:hover {
+    border-color: #AFC9B1;
+}
+
+QLineEdit:focus,
+QComboBox:focus,
+QTextEdit:focus,
+QDateEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 2px solid #4B9A4A;
+}
+
+/* ---------- Search ---------- */
+QLineEdit#product_search {
+    min-height: 46px;
+    border-radius: 23px;
+    padding: 9px 20px;
+    font-size: 12pt;
+}
+
+QLineEdit#top_product_search {
+    min-height: 42px;
+    border-radius: 21px;
+    padding: 8px 18px;
+}
+
+QListWidget#product_search_results,
+QListWidget#top_product_search_results {
+    background: #FFFFFF;
+    border: 1px solid #DFE7E0;
+    border-radius: 10px;
+    padding: 5px;
+    outline: none;
+}
+
+QListWidget#product_search_results::item,
+QListWidget#top_product_search_results::item {
+    padding: 10px 12px;
+    border-radius: 7px;
+}
+
+QListWidget#product_search_results::item:hover,
+QListWidget#top_product_search_results::item:hover {
+    background: #EEF6EE;
+}
+
+QListWidget#product_search_results::item:selected,
+QListWidget#top_product_search_results::item:selected {
+    background: #DDEEDC;
+    color: #243B27;
+}
+
+/* ---------- Tables ---------- */
+QTableWidget,
+QTableView {
+    background: #FFFFFF;
+    color: #263A30;
+    border: 1px solid #DFE7E0;
+    border-radius: 12px;
+    gridline-color: transparent;
+    selection-background-color: #DDEEDC;
+    selection-color: #243B27;
+    alternate-background-color: #FAFCFA;
+    outline: none;
+}
+
+QTableWidget QHeaderView::section,
+QTableView QHeaderView::section {
+    background: #F0F5F1;
+    color: #526158;
+    border: none;
+    border-bottom: 1px solid #DCE5DD;
+    padding: 11px 10px;
+    font-weight: 700;
+}
+
+QTableWidget::item,
+QTableView::item {
+    padding: 9px 11px;
+    border-bottom: 1px solid #EDF1ED;
+}
+
+QTableWidget::item:hover,
+QTableView::item:hover {
+    background: #EFF6EF;
+}
+
+QTableWidget::item:selected,
+QTableView::item:selected {
+    background: #DDEEDC;
+    color: #243B27;
+}
+
+/* ---------- Buttons ---------- */
+QPushButton#primary_button {
+    background: #3F8142;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    min-height: 44px;
+    padding: 10px 28px;
+    font-weight: 700;
+}
+
+QPushButton#primary_button:hover { background: #37743A; }
+QPushButton#primary_button:pressed { background: #2F6432; }
+
+QPushButton#secondary_button {
+    background: #FFFFFF;
+    color: #4D5B53;
+    border: 1px solid #D5DED6;
+    border-radius: 9px;
+    min-height: 42px;
+    padding: 9px 18px;
+    font-weight: 600;
+}
+
+QPushButton#secondary_button:hover {
+    background: #F0F6F0;
+    border-color: #B5CDB6;
+    color: #2F6B37;
+}
+
+QPushButton#danger_button {
+    background: #FFFFFF;
+    color: #B83B31;
+    border: 1px solid #E4B8B2;
+    border-radius: 9px;
+    min-height: 42px;
+    padding: 9px 18px;
+    font-weight: 600;
+}
+
+QPushButton#danger_button:hover { background: #FFF3F1; }
+
+/* ---------- Combo popup ---------- */
+QComboBox QAbstractItemView {
+    background: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #D6DED7;
+    selection-background-color: #DDEEDC;
+    selection-color: #243B27;
+    padding: 4px;
+}
+
+/* ---------- Scrollbars ---------- */
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 4px 2px 4px 2px;
+}
+
+QScrollBar::handle:vertical {
+    background: #C7D5C9;
+    border-radius: 5px;
+    min-height: 35px;
+}
+
+QScrollBar::handle:vertical:hover { background: #9FB6A2; }
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical { height: 0; }
+
+QScrollBar:horizontal {
+    background: transparent;
+    height: 10px;
+    margin: 2px 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #C7D5C9;
+    border-radius: 5px;
+    min-width: 35px;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal { width: 0; }

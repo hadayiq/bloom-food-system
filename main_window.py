@@ -29,24 +29,12 @@ class MainWindow(QWidget):
 
         super().__init__()
 
-        # ==========================================
-        # WINDOW
-        # ==========================================
-
         self.setWindowTitle("Bloom Food - Inventory System")
         self.resize(1250, 750)
-
-        # ==========================================
-        # MAIN LAYOUT
-        # ==========================================
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-
-        # ==========================================
-        # SIDEBAR
-        # ==========================================
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
@@ -55,10 +43,6 @@ class MainWindow(QWidget):
         sidebar_layout = QVBoxLayout()
         sidebar_layout.setContentsMargins(18, 24, 18, 18)
         sidebar_layout.setSpacing(6)
-
-        # ==========================================
-        # COMPANY HEADER
-        # ==========================================
 
         company_name = QLabel("BLOOM FOOD")
         company_name.setObjectName("company_name")
@@ -76,12 +60,7 @@ class MainWindow(QWidget):
         sidebar_line.setFrameShadow(QFrame.Plain)
 
         sidebar_layout.addWidget(sidebar_line)
-
         sidebar_layout.addSpacing(18)
-
-        # ==========================================
-        # NAVIGATION BUTTONS
-        # ==========================================
 
         self.btn_dashboard = QPushButton("Dashboard")
         self.btn_add = QPushButton("إضافة حركة")
@@ -89,56 +68,29 @@ class MainWindow(QWidget):
         self.btn_products = QPushButton("إدارة الأصناف")
         self.btn_reports = QPushButton("التقارير")
 
-        # ==========================================
-        # SIDEBAR ICONS
-        # ==========================================
-
-        # مكان الأيقونات:
-        #
-        # Inventory Project/
-        # │
-        # ├── main_window.py
-        # │
-        # └── icons/
-        #     ├── dashboard.svg
-        #     ├── transaction.svg
-        #     ├── product_card.svg
-        #     ├── products.svg
-        #     └── reports.svg
-
         base_dir = os.path.dirname(os.path.abspath(__file__))
         icons_dir = os.path.join(base_dir, "icons")
 
-        icon_files = {
-            self.btn_dashboard: "dashboard.svg",
-            self.btn_add: "transaction.svg",
-            self.btn_search: "product_card.svg",
-            self.btn_products: "products.svg",
-            self.btn_reports: "reports.svg",
+        self.icon_files = {
+            self.btn_dashboard: ("dashboard.svg", "dashboard_active.svg"),
+            self.btn_add: ("transaction.svg", "transaction_active.svg"),
+            self.btn_search: ("product_card.svg", "product_card_active.svg"),
+            self.btn_products: ("products.svg", "products_active.svg"),
+            self.btn_reports: ("reports.svg", "reports_active.svg"),
         }
 
         icon_size = QSize(22, 22)
 
-        for button, icon_name in icon_files.items():
-
+        for button, (icon_name, _) in self.icon_files.items():
             icon_path = os.path.join(icons_dir, icon_name)
-
             icon = QIcon(icon_path)
-
-            # Debug
             print(
                 f"[ICON] {icon_name} | "
                 f"EXISTS={os.path.exists(icon_path)} | "
                 f"NULL={icon.isNull()}"
             )
-
-            # وضع الأيقونة فعليًا على الزر
             button.setIcon(icon)
             button.setIconSize(icon_size)
-
-        # ==========================================
-        # SIDEBAR BUTTON SETTINGS
-        # ==========================================
 
         buttons = [
             self.btn_dashboard,
@@ -149,40 +101,20 @@ class MainWindow(QWidget):
         ]
 
         for button in buttons:
-
             button.setObjectName("sidebar_button")
-
             button.setCursor(Qt.PointingHandCursor)
-
-            button.setSizePolicy(
-                QSizePolicy.Expanding,
-                QSizePolicy.Fixed,
-            )
-
-            # RTL
-            # النص العربي والأيقونة ناحية اليمين
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.RightToLeft)
-
             sidebar_layout.addWidget(button)
 
         sidebar_layout.addStretch()
 
-        # ==========================================
-        # FOOTER
-        # ==========================================
-
         footer = QLabel("Bloom Food\n" "Inventory System")
-
         footer.setObjectName("sidebar_footer")
         footer.setAlignment(Qt.AlignCenter)
-
         sidebar_layout.addWidget(footer)
 
         sidebar.setLayout(sidebar_layout)
-
-        # ==========================================
-        # STACKED PAGES
-        # ==========================================
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("content_area")
@@ -199,53 +131,38 @@ class MainWindow(QWidget):
         self.stack.addWidget(self.products_page)
         self.stack.addWidget(self.reports_page)
 
-        # ==========================================
-        # REFRESH SYSTEM
-        # ==========================================
-
         refresh_manager.data_changed.connect(self.dashboard_page.load_data)
-
         refresh_manager.products_changed.connect(self.dashboard_page.load_data)
-
-        # ==========================================
-        # NAVIGATION
-        # ==========================================
 
         self.btn_dashboard.clicked.connect(
             lambda: self.change_page(0, self.btn_dashboard)
         )
-
         self.btn_add.clicked.connect(lambda: self.change_page(1, self.btn_add))
-
         self.btn_search.clicked.connect(lambda: self.change_page(2, self.btn_search))
-
         self.btn_products.clicked.connect(
             lambda: self.change_page(3, self.btn_products)
         )
-
-        self.btn_reports.clicked.connect(lambda: self.change_page(4, self.btn_reports))
-
-        # ==========================================
-        # MAIN SCREEN LAYOUT
-        # ==========================================
+        self.btn_reports.clicked.connect(
+            lambda: self.change_page(4, self.btn_reports)
+        )
 
         main_layout.addWidget(sidebar)
         main_layout.addWidget(self.stack)
-
         self.setLayout(main_layout)
-
-        # ==========================================
-        # DEFAULT PAGE
-        # ==========================================
 
         self.change_page(0, self.btn_dashboard)
 
-    # ==========================================
-    # CHANGE PAGE
-    # ==========================================
+    def _set_sidebar_icon(self, button, active=False):
+        normal_icon, active_icon = self.icon_files[button]
+        icon_name = active_icon if active else normal_icon
+        icon_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "icons",
+            icon_name,
+        )
+        button.setIcon(QIcon(icon_path))
 
     def change_page(self, index, active_button):
-
         self.stack.setCurrentIndex(index)
 
         buttons = [
@@ -257,9 +174,9 @@ class MainWindow(QWidget):
         ]
 
         for button in buttons:
-
-            button.setProperty("active", button == active_button)
-
+            is_active = button == active_button
+            button.setProperty("active", is_active)
+            self._set_sidebar_icon(button, is_active)
             button.style().unpolish(button)
             button.style().polish(button)
             button.update()

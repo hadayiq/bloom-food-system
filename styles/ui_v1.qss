@@ -109,14 +109,23 @@ QFrame#sidebar_line {
     border: none;
 }
 
-/* ---------- Dashboard KPI cards ---------- */
+/* ---------- KPI / Summary cards ---------- */
 QFrame#kpi_card,
-QFrame#summary_card,
-QFrame#transaction_card {
+QFrame#summary_card {
     background: #FFFFFF;
     border: 1px solid #DCE6DE;
     border-radius: 16px;
     min-height: 126px;
+}
+
+/* Transaction cards contain dynamic forms and tables.
+   Do NOT impose a fixed minimum height here: QWidget minimumSize
+   from a stylesheet can override the layout's calculated minimum
+   size and cause labels/fields/buttons to overlap. */
+QFrame#transaction_card {
+    background: #FFFFFF;
+    border: 1px solid #DCE6DE;
+    border-radius: 16px;
 }
 
 QFrame#kpi_card:hover,

@@ -1,444 +1,228 @@
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QTableWidget,
-    QTableWidgetItem,
-    QFrame,
-    QHeaderView,
-    QStyle,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
+    QTableWidgetItem, QFrame, QHeaderView, QStyle, QPushButton, QScrollArea
 )
 from PySide6.QtCore import Qt
 
 from database.transactions import TransactionRepository
+from database.products import ProductRepository
+from database.batches import BatchRepository
 from utils.refresh_manager import refresh_manager
 
 
 class InventorySummaryPage(QWidget):
+    """Inventory dashboard with clickable product -> batch breakdown."""
 
     def __init__(self):
-
         super().__init__()
+        self.setLayoutDirection(Qt.RightToLeft)
+        self.transaction_repo = TransactionRepository()
+        self.product_repo = ProductRepository()
+        self.batch_repo = BatchRepository()
+        self.selected_product = None
 
-        # ==========================================
-        # MAIN LAYOUT
-        # ==========================================
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
 
-        main_layout = QVBoxLayout()
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QScrollArea.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
-        main_layout.setContentsMargins(
-            35,
-            30,
-            35,
-            30,
-        )
+        content = QWidget()
+        main = QVBoxLayout(content)
+        main.setContentsMargins(35, 30, 35, 30)
+        main.setSpacing(20)
 
-        main_layout.setSpacing(22)
-
-        # ==========================================
-        # PAGE HEADER
-        # ==========================================
-
-        header_layout = QVBoxLayout()
-        header_layout.setSpacing(3)
-
+        header = QVBoxLayout()
         title = QLabel("Inventory Dashboard")
         title.setObjectName("dashboard_title")
-
         subtitle = QLabel("نظرة عامة على المخزون والحركات")
         subtitle.setObjectName("dashboard_subtitle")
+        header.addWidget(title)
+        header.addWidget(subtitle)
+        main.addLayout(header)
 
-        header_layout.addWidget(title)
-        header_layout.addWidget(subtitle)
+        cards = QHBoxLayout()
+        cards.setSpacing(18)
+        self.current_stock_card, self.current_stock_value = self.create_card("الرصيد الحالي", "0.00", "kpi_green", QStyle.SP_DriveHDIcon)
+        self.outgoing_card, self.outgoing_value = self.create_card("إجمالي المنصرف", "0.00", "kpi_blue", QStyle.SP_ArrowRight)
+        self.incoming_card, self.incoming_value = self.create_card("إجمالي الوارد", "0.00", "kpi_orange", QStyle.SP_ArrowLeft)
+        self.products_card, self.products_value = self.create_card("إجمالي الأصناف", "0", "kpi_purple", QStyle.SP_DirIcon)
+        for card in [self.current_stock_card, self.outgoing_card, self.incoming_card, self.products_card]:
+            cards.addWidget(card)
+        main.addLayout(cards)
 
-        main_layout.addLayout(header_layout)
-
-        # ==========================================
-        # KPI CARDS
-        # ==========================================
-
-        cards_layout = QHBoxLayout()
-        cards_layout.setSpacing(18)
-
-        # ------------------------------------------
-        # Current Stock
-        # ------------------------------------------
-
-        (
-            self.current_stock_card,
-            self.current_stock_value,
-        ) = self.create_card(
-            "الرصيد الحالي",
-            "0.00",
-            "kpi_green",
-            QStyle.SP_DriveHDIcon,
-        )
-
-        # ------------------------------------------
-        # Outgoing
-        # ------------------------------------------
-
-        (
-            self.outgoing_card,
-            self.outgoing_value,
-        ) = self.create_card(
-            "إجمالي المنصرف",
-            "0.00",
-            "kpi_blue",
-            QStyle.SP_ArrowRight,
-        )
-
-        # ------------------------------------------
-        # Incoming
-        # ------------------------------------------
-
-        (
-            self.incoming_card,
-            self.incoming_value,
-        ) = self.create_card(
-            "إجمالي الوارد",
-            "0.00",
-            "kpi_orange",
-            QStyle.SP_ArrowLeft,
-        )
-
-        # ------------------------------------------
-        # Products
-        # ------------------------------------------
-
-        (
-            self.products_card,
-            self.products_value,
-        ) = self.create_card(
-            "إجمالي الأصناف",
-            "0",
-            "kpi_purple",
-            QStyle.SP_DirIcon,
-        )
-
-        cards_layout.addWidget(self.current_stock_card)
-        cards_layout.addWidget(self.outgoing_card)
-        cards_layout.addWidget(self.incoming_card)
-        cards_layout.addWidget(self.products_card)
-
-        main_layout.addLayout(cards_layout)
-
-        # ==========================================
-        # SECTION HEADER
-        # ==========================================
-
-        section_layout = QHBoxLayout()
-
-        table_title = QLabel("ملخص المخزون")
-        table_title.setObjectName("dashboard_section_title")
-
-        section_layout.addStretch()
-
-        section_layout.addWidget(
-            table_title,
-            alignment=Qt.AlignRight,
-        )
-
-        main_layout.addLayout(section_layout)
-
-        # ==========================================
-        # INVENTORY TABLE
-        # ==========================================
+        section = QHBoxLayout()
+        section_title = QLabel("ملخص المخزون — اضغط على أي صنف لعرض الباتشات")
+        section_title.setObjectName("dashboard_section_title")
+        section.addWidget(section_title)
+        section.addStretch()
+        main.addLayout(section)
 
         self.table = QTableWidget()
-
+        self.table.setObjectName("dashboard_inventory_table")
         self.table.setColumnCount(5)
-
-        self.table.setHorizontalHeaderLabels(
-            [
-                "الصنف",
-                "أول المدة",
-                "الوارد",
-                "المنصرف",
-                "الرصيد الحالي",
-            ]
-        )
-
-        # ------------------------------------------
-        # Table Behavior
-        # ------------------------------------------
-
+        self.table.setHorizontalHeaderLabels(["الصنف", "أول المدة", "الوارد", "المنصرف", "الرصيد الحالي"])
         self.table.setAlternatingRowColors(True)
-
         self.table.setShowGrid(False)
-
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
-
         self.table.setSelectionMode(QTableWidget.SingleSelection)
-
-        # ------------------------------------------
-        # Headers
-        # ------------------------------------------
-
         self.table.verticalHeader().setVisible(False)
-
         self.table.verticalHeader().setDefaultSectionSize(44)
-
         header = self.table.horizontalHeader()
-
         header.setHighlightSections(False)
-
         header.setStretchLastSection(True)
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        for i in range(1, 5):
+            header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        self.table.cellClicked.connect(self.show_batch_breakdown)
+        main.addWidget(self.table)
 
-        # ------------------------------------------
-        # Column Sizes
-        # ------------------------------------------
+        self.detail_frame = QFrame()
+        self.detail_frame.setObjectName("transaction_card")
+        detail = QVBoxLayout(self.detail_frame)
+        detail.setContentsMargins(20, 18, 20, 18)
+        detail.setSpacing(12)
+        self.detail_title = QLabel("تفاصيل الباتشات")
+        self.detail_title.setObjectName("section_title")
+        detail.addWidget(self.detail_title)
 
-        header.setSectionResizeMode(
-            0,
-            QHeaderView.Stretch,
-        )
+        detail_cards = QHBoxLayout()
+        self.detail_total = self.make_small_card("إجمالي الصنف", "0.00")
+        self.detail_batch_count = self.make_small_card("عدد الباتشات", "0")
+        detail_cards.addWidget(self.detail_total[0])
+        detail_cards.addWidget(self.detail_batch_count[0])
+        detail.addLayout(detail_cards)
 
-        header.setSectionResizeMode(
-            1,
-            QHeaderView.ResizeToContents,
-        )
+        self.batch_table = QTableWidget()
+        self.batch_table.setObjectName("dashboard_batch_table")
+        self.batch_table.setColumnCount(7)
+        self.batch_table.setHorizontalHeaderLabels(["الباتش", "الصلاحية", "أول المدة", "الوارد", "المرتجع", "المنصرف", "الرصيد"])
+        self.batch_table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.batch_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.batch_table.setAlternatingRowColors(True)
+        self.batch_table.verticalHeader().setVisible(False)
+        bh = self.batch_table.horizontalHeader()
+        bh.setDefaultAlignment(Qt.AlignCenter)
+        for i in range(7):
+            bh.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+        self.batch_table.setMinimumHeight(150)
+        detail.addWidget(self.batch_table)
 
-        header.setSectionResizeMode(
-            2,
-            QHeaderView.ResizeToContents,
-        )
+        close = QPushButton("إخفاء تفاصيل الباتشات")
+        close.setObjectName("secondary_button")
+        close.clicked.connect(self.hide_batch_breakdown)
+        detail.addWidget(close, alignment=Qt.AlignLeft)
 
-        header.setSectionResizeMode(
-            3,
-            QHeaderView.ResizeToContents,
-        )
+        self.detail_frame.hide()
+        main.addWidget(self.detail_frame)
+        main.addStretch()
 
-        header.setSectionResizeMode(
-            4,
-            QHeaderView.ResizeToContents,
-        )
-
-        main_layout.addWidget(self.table)
-
-        # ==========================================
-        # FINAL LAYOUT
-        # ==========================================
-
-        self.setLayout(main_layout)
-
-        # ==========================================
-        # INITIAL LOAD
-        # ==========================================
+        self.scroll.setWidget(content)
+        outer.addWidget(self.scroll)
 
         self.load_data()
-
-        # ==========================================
-        # REFRESH SYSTEM
-        # ==========================================
-
         refresh_manager.data_changed.connect(self.load_data)
-
         refresh_manager.products_changed.connect(self.load_data)
 
-    # ==================================================
-    # CREATE KPI CARD
-    # ==================================================
-
-    def create_card(
-        self,
-        title,
-        value,
-        object_name,
-        icon_type,
-    ):
-
+    def create_card(self, title, value, object_name, icon_type):
         card = QFrame()
-
         card.setObjectName("kpi_card")
-
-        card.setProperty(
-            "class",
-            object_name,
-        )
-
-        # ------------------------------------------
-        # Card Layout
-        # ------------------------------------------
-
-        layout = QVBoxLayout()
-
-        layout.setContentsMargins(
-            18,
-            12,
-            18,
-            12,
-        )
-
-        layout.setSpacing(4)
-
-        # ------------------------------------------
-        # ICON
-        # ------------------------------------------
-
+        card.setProperty("class", object_name)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(18, 12, 18, 12)
         icon_label = QLabel()
-
         icon_label.setObjectName("kpi_icon")
-
-        icon = self.style().standardIcon(icon_type)
-
-        icon_pixmap = icon.pixmap(
-            28,
-            28,
-        )
-
-        icon_label.setPixmap(icon_pixmap)
-
+        icon_label.setPixmap(self.style().standardIcon(icon_type).pixmap(28, 28))
         icon_label.setAlignment(Qt.AlignCenter)
-
-        # ------------------------------------------
-        # TITLE
-        # ------------------------------------------
-
         title_label = QLabel(title)
-
         title_label.setObjectName("kpi_title")
-
         title_label.setAlignment(Qt.AlignCenter)
-
-        # ------------------------------------------
-        # VALUE
-        # ------------------------------------------
-
         value_label = QLabel(value)
-
         value_label.setObjectName("kpi_value")
-
         value_label.setAlignment(Qt.AlignCenter)
-
-        # ------------------------------------------
-        # ADD TO CARD
-        # ------------------------------------------
-
         layout.addWidget(icon_label)
-
         layout.addWidget(title_label)
-
         layout.addWidget(value_label)
-
-        card.setLayout(layout)
-
         return card, value_label
 
-    # ==================================================
-    # LOAD DATA
-    # ==================================================
+    def make_small_card(self, title, value):
+        card = QFrame()
+        card.setObjectName("kpi_card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(15, 10, 15, 10)
+        label = QLabel(title)
+        label.setObjectName("kpi_title")
+        label.setAlignment(Qt.AlignCenter)
+        val = QLabel(value)
+        val.setObjectName("kpi_value")
+        val.setAlignment(Qt.AlignCenter)
+        layout.addWidget(label)
+        layout.addWidget(val)
+        return card, val
 
     def load_data(self):
-
-        print("SUMMARY REFRESHED")
-
-        repo = TransactionRepository()
-
-        data = repo.get_inventory_summary()
-
-        # ------------------------------------------
-        # Table
-        # ------------------------------------------
-
+        data = self.transaction_repo.get_inventory_summary()
         self.table.setRowCount(len(data))
-
-        # ------------------------------------------
-        # Totals
-        # ------------------------------------------
-
-        total_opening = 0
-        total_incoming = 0
-        total_outgoing = 0
-        total_current = 0
-
-        # ==========================================
-        # FILL TABLE
-        # ==========================================
-
-        for row_index, row_data in enumerate(data):
-
-            for column_index, value in enumerate(row_data):
-
+        total_in = total_out = total_current = 0.0
+        for r, row in enumerate(data):
+            for c, value in enumerate(row):
                 item = QTableWidgetItem(str(value))
-
-                # ----------------------------------
-                # Alignment
-                # ----------------------------------
-
-                if column_index == 0:
-
-                    item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-
-                else:
-
-                    item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-
-                self.table.setItem(
-                    row_index,
-                    column_index,
-                    item,
-                )
-
-            # ======================================
-            # CALCULATE TOTALS
-            # ======================================
-
-            try:
-
-                total_opening += float(row_data[1])
-
-            except (
-                ValueError,
-                TypeError,
-            ):
-
-                pass
-
-            try:
-
-                total_incoming += float(row_data[2])
-
-            except (
-                ValueError,
-                TypeError,
-            ):
-
-                pass
-
-            try:
-
-                total_outgoing += float(row_data[3])
-
-            except (
-                ValueError,
-                TypeError,
-            ):
-
-                pass
-
-            try:
-
-                total_current += float(row_data[4])
-
-            except (
-                ValueError,
-                TypeError,
-            ):
-
-                pass
-
-        # ==========================================
-        # UPDATE KPI CARDS
-        # ==========================================
-
+                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter if c == 0 else Qt.AlignCenter)
+                self.table.setItem(r, c, item)
+            total_in += float(row[2] or 0)
+            total_out += float(row[3] or 0)
+            total_current += float(row[4] or 0)
         self.current_stock_value.setText(f"{total_current:,.2f}")
-
-        self.incoming_value.setText(f"{total_incoming:,.2f}")
-
-        self.outgoing_value.setText(f"{total_outgoing:,.2f}")
-
+        self.incoming_value.setText(f"{total_in:,.2f}")
+        self.outgoing_value.setText(f"{total_out:,.2f}")
         self.products_value.setText(f"{len(data):,}")
+        if self.selected_product:
+            self.refresh_detail()
+
+    def show_batch_breakdown(self, row, _column):
+        item = self.table.item(row, 0)
+        if not item:
+            return
+        self.selected_product = item.text()
+        self.refresh_detail()
+        self.detail_frame.show()
+        self.scroll.ensureWidgetVisible(self.detail_frame, 20, 20)
+
+    def refresh_detail(self):
+        product = self.selected_product
+        product_id = self.product_repo.get_product_id(product)
+        batches = self.batch_repo.get_batches(product_id) if product_id is not None else []
+        self.detail_title.setText(f"باتشات صنف: {product}")
+        _, _, total_balance = self.transaction_repo.get_product_balance(product)
+        self.detail_total[1].setText(f"{total_balance:,.2f}")
+        self.detail_batch_count[1].setText(str(len(batches)))
+        self.batch_table.setRowCount(len(batches))
+
+        for r, batch in enumerate(batches):
+            transactions = self.transaction_repo.get_transactions_by_product(product, batch["code"])
+            normal_in = returns = out = 0.0
+            for tx in transactions:
+                qty = float(tx[5] or 0)
+                if tx[4] == "مردودات مبيعات":
+                    returns += qty
+                elif tx[4] in ["إنتاج", "مشتريات"]:
+                    normal_in += qty
+                else:
+                    out += qty
+            _, _, balance = self.transaction_repo.get_batch_balance(product, batch["code"])
+            values = [
+                batch["code"], batch["expiry_date"], f'{batch["opening_balance"]:,.2f}',
+                f"{normal_in:,.2f}", f"{returns:,.2f}", f"{out:,.2f}", f"{balance:,.2f}"
+            ]
+            for c, value in enumerate(values):
+                item = QTableWidgetItem(str(value))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.batch_table.setItem(r, c, item)
+
+    def hide_batch_breakdown(self):
+        self.detail_frame.hide()
+        self.selected_product = None

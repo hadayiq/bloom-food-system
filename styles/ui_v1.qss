@@ -14,10 +14,14 @@ QScrollArea > QWidget > QWidget {
     border: none;
 }
 
+QWidget#content_area {
+    background: #F7F9F7;
+}
+
 /* ---------- Dashboard ---------- */
 QLabel#dashboard_title,
 QLabel#page_title {
-    color: #2F6338;
+    color: #244C2B;
     font-size: 29pt;
     font-weight: 800;
     background: transparent;
@@ -36,10 +40,11 @@ QLabel#page_subtitle {
 
 QLabel#dashboard_section_title,
 QLabel#section_title {
-    color: #2D3A32;
+    color: #29382F;
     font-size: 14pt;
     font-weight: 700;
     background: transparent;
+    padding: 4px 0;
 }
 
 /* ---------- Sidebar ---------- */
@@ -57,6 +62,7 @@ QPushButton#sidebar_button {
     font-size: 10.5pt;
     font-weight: 600;
     text-align: right;
+    border: 1px solid transparent;
 }
 
 QPushButton#sidebar_button:hover {
@@ -68,6 +74,7 @@ QPushButton#sidebar_button[active="true"] {
     background: #438E46;
     color: #FFFFFF;
     font-weight: 700;
+    border-color: #438E46;
 }
 
 QPushButton#sidebar_button[active="true"]:hover {
@@ -85,12 +92,22 @@ QLabel#sidebar_footer {
     color: #89958D;
 }
 
-/* ---------- KPI / Cards ---------- */
+QFrame#sidebar_line {
+    color: #E7ECE8;
+    background: #E7ECE8;
+    min-height: 1px;
+    max-height: 1px;
+    border: none;
+}
+
+/* ---------- Dashboard KPI cards ---------- */
 QFrame#kpi_card,
 QFrame#summary_card,
 QFrame#transaction_card {
     background: #FFFFFF;
     border: 1px solid #DFE7E0;
+    border-radius: 16px;
+    min-height: 126px;
 }
 
 QFrame#kpi_card:hover,
@@ -99,10 +116,34 @@ QFrame#transaction_card:hover {
     border-color: #B7CFB9;
 }
 
+QFrame#kpi_card[class="kpi_green"] {
+    border-top: 4px solid #438E46;
+}
+
+QFrame#kpi_card[class="kpi_blue"] {
+    border-top: 4px solid #4D7FA8;
+}
+
+QFrame#kpi_card[class="kpi_orange"] {
+    border-top: 4px solid #C88945;
+}
+
+QFrame#kpi_card[class="kpi_purple"] {
+    border-top: 4px solid #7D68A8;
+}
+
+QLabel#kpi_icon {
+    min-height: 28px;
+    max-height: 28px;
+    background: transparent;
+}
+
 QLabel#kpi_title,
 QLabel#card_title {
     color: #68766E;
+    font-size: 10.5pt;
     font-weight: 600;
+    background: transparent;
 }
 
 QLabel#kpi_value,
@@ -110,7 +151,16 @@ QLabel#products_value,
 QLabel#in_value,
 QLabel#out_value,
 QLabel#balance_value {
+    color: #25382B;
+    font-size: 19pt;
     font-weight: 800;
+    background: transparent;
+}
+
+/* ---------- Dashboard table ---------- */
+QTableWidget#inventory_table,
+QTableView#inventory_table {
+    min-height: 300px;
 }
 
 /* ---------- Forms ---------- */

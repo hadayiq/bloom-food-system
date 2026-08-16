@@ -1,0 +1,154 @@
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QFrame,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QScrollArea,
+)
+from PySide6.QtCore import Qt
+
+from database.issues import IssueRepository
+from utils.refresh_manager import refresh_manager
+
+
+class SubwarehousesPage(QWidget):
+    """Representatives' cars as subwarehouses."""
+
+    def __init__(self):
+        super().__init__()
+        self.repo = IssueRepository()
+        self.selected_rep = None
+        self.build_ui()
+        refresh_manager.data_changed.connect(self.load_data)
+        self.load_data()
+
+    def build_ui(self):
+        root = QVBoxLayout(self)
+        root.setContentsMargins(35, 30, 35, 30)
+        root.setSpacing(18)
+
+        title = QLabel("المخازن الفرعية")
+        title.setObjectName("page_title")
+        subtitle = QLabel("كل سيارة مندوب تُعامل كمخزن فرعي مستقل")
+        subtitle.setObjectName("page_subtitle")
+        root.addWidget(title)
+        root.addWidget(subtitle)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.NoFrame)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        self.content = QWidget()
+        self.content_layout = QVBoxLayout(self.content)
+        self.content_layout.setContentsMargins(0, 10, 0, 10)
+        self.content_layout.setSpacing(14)
+        self.scroll.setWidget(self.content)
+        root.addWidget(self.scroll, 1)
+
+    def _clear(self):
+        while self.content_layout.count():
+            item = self.content_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+    def load_data(self, *_):
+        self._clear()
+        totals = self.repo.get_subwarehouses()
+        open_issues = self.repo.get_open_issues()
+        reps = sorted(set(totals) | {item["representative"] for item in open_issues})
+
+        if not reps:
+            empty = QLabel("لا توجد مخازن فرعية حتى الآن. عند حفظ أول إذن صرف سيظهر المندوب هنا.")
+            empty.setObjectName("section_description")
+            self.content_layout.addWidget(empty)
+            self.content_layout.addStretch()
+            return
+
+        for rep in reps:
+            self._add_rep_card(rep, totals.get(rep, 0.0), rep in {x["representative"] for x in open_issues})
+        self.content_layout.addStretch()
+
+    def _add_rep_card(self, representative, total, is_open):
+        card = QFrame()
+        card.setObjectName("transaction_card")
+        layout = QHBoxLayout(card)
+        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setSpacing(15)
+
+        title_box = QVBoxLayout()
+        name = QLabel(representative)
+        name.setObjectName("section_title")
+        status = QLabel("غير مُصفّى" if is_open else "مُصفّى")
+        status.setObjectName("section_description")
+        title_box.addWidget(name)
+        title_box.addWidget(status)
+
+        amount = QLabel(f"الرصيد المحمّل: {total:,.2f}")
+        amount.setObjectName("kpi_value")
+        amount.setAlignment(Qt.AlignCenter)
+
+        button = QPushButton("فتح المخزن")
+        button.setMinimumHeight(44)
+        button.setObjectName("danger_button" if is_open else "secondary_button")
+        button.setCursor(Qt.PointingHandCursor)
+        button.clicked.connect(lambda _=False, rep=representative: self.show_rep(rep))
+
+        layout.addLayout(title_box, 1)
+        layout.addWidget(amount)
+        layout.addWidget(button)
+        self.content_layout.addWidget(card)
+
+    def show_rep(self, representative):
+        self.selected_rep = representative
+        self._clear()
+
+        back = QPushButton("← رجوع للمخازن الفرعية")
+        back.setObjectName("secondary_button")
+        back.clicked.connect(self.load_data)
+        self.content_layout.addWidget(back, 0, Qt.AlignLeft)
+
+        title = QLabel(f"مخزن المندوب: {representative}")
+        title.setObjectName("page_title")
+        self.content_layout.addWidget(title)
+
+        issues = [x for x in self.repo.get_open_issues() if x["representative"] == representative]
+        if issues:
+            issue_title = QLabel("أذون الصرف المفتوحة")
+            issue_title.setObjectName("section_title")
+            self.content_layout.addWidget(issue_title)
+            for issue in issues:
+                label = QLabel(f"إذن {issue['issue_no']} — {issue['date']}")
+                label.setObjectName("section_description")
+                self.content_layout.addWidget(label)
+
+        table = QTableWidget()
+        table.setColumnCount(4)
+        table.setHorizontalHeaderLabels(["الصنف", "الباتش", "الصلاحية", "الرصيد"])
+        table.setAlternatingRowColors(True)
+        table.setShowGrid(False)
+        table.verticalHeader().setVisible(False)
+        table.setEditTriggers(QTableWidget.NoEditTriggers)
+        header = table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+
+        stock = self.repo.get_subwarehouse_stock(representative)
+        table.setRowCount(len(stock))
+        for r, item in enumerate(stock):
+            values = [item["product"], item["batch_code"] or "—", "—", f"{item['quantity']:,.2f}"]
+            for c, value in enumerate(values):
+                cell = QTableWidgetItem(str(value))
+                cell.setTextAlignment(Qt.AlignCenter if c else (Qt.AlignRight | Qt.AlignVCenter))
+                table.setItem(r, c, cell)
+
+        self.content_layout.addWidget(table)
+        self.content_layout.addStretch()

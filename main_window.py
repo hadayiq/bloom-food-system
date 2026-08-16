@@ -19,6 +19,8 @@ from ui.add_transaction_page import AddTransactionPage
 from ui.product_card_page import ProductCardPage
 from ui.reports_page import ReportsPage
 from ui.products_page import ProductsPage
+from ui.issue_voucher_dialog import IssueVoucherDialog
+from ui.subwarehouses_page import SubwarehousesPage
 
 from utils.refresh_manager import refresh_manager
 
@@ -66,6 +68,7 @@ class MainWindow(QWidget):
         self.btn_add = QPushButton("إضافة حركة")
         self.btn_search = QPushButton("كارت الصنف")
         self.btn_products = QPushButton("إدارة الأصناف")
+        self.btn_subwarehouses = QPushButton("المخازن الفرعية")
         self.btn_reports = QPushButton("التقارير")
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -76,6 +79,7 @@ class MainWindow(QWidget):
             self.btn_add: ("transaction.svg", "transaction_active.svg"),
             self.btn_search: ("product_card.svg", "product_card_active.svg"),
             self.btn_products: ("products.svg", "products_active.svg"),
+            self.btn_subwarehouses: ("subwarehouse.svg", "subwarehouse_active.svg"),
             self.btn_reports: ("reports.svg", "reports_active.svg"),
         }
 
@@ -97,6 +101,7 @@ class MainWindow(QWidget):
             self.btn_add,
             self.btn_search,
             self.btn_products,
+            self.btn_subwarehouses,
             self.btn_reports,
         ]
 
@@ -123,16 +128,31 @@ class MainWindow(QWidget):
         self.add_page = AddTransactionPage()
         self.product_card_page = ProductCardPage()
         self.products_page = ProductsPage()
+        self.subwarehouses_page = SubwarehousesPage()
         self.reports_page = ReportsPage()
+
+        # The issue voucher belongs to the Add Transaction workflow, but is a
+        # separate multi-line document so the user never has to enter 27
+        # individual transactions for one delivery.
+        issue_button = QPushButton("＋  إضافة إذن صرف")
+        issue_button.setObjectName("secondary_button")
+        issue_button.setMinimumHeight(50)
+        issue_button.setCursor(Qt.PointingHandCursor)
+        issue_button.clicked.connect(self.open_issue_voucher)
+        issue_card = self.add_page.new_button.parentWidget()
+        if issue_card is not None and issue_card.layout() is not None:
+            issue_card.layout().addWidget(issue_button)
 
         self.stack.addWidget(self.dashboard_page)
         self.stack.addWidget(self.add_page)
         self.stack.addWidget(self.product_card_page)
         self.stack.addWidget(self.products_page)
+        self.stack.addWidget(self.subwarehouses_page)
         self.stack.addWidget(self.reports_page)
 
         refresh_manager.data_changed.connect(self.dashboard_page.load_data)
         refresh_manager.products_changed.connect(self.dashboard_page.load_data)
+        refresh_manager.data_changed.connect(self.subwarehouses_page.load_data)
 
         self.btn_dashboard.clicked.connect(
             lambda: self.change_page(0, self.btn_dashboard)
@@ -142,8 +162,11 @@ class MainWindow(QWidget):
         self.btn_products.clicked.connect(
             lambda: self.change_page(3, self.btn_products)
         )
+        self.btn_subwarehouses.clicked.connect(
+            lambda: self.change_page(4, self.btn_subwarehouses)
+        )
         self.btn_reports.clicked.connect(
-            lambda: self.change_page(4, self.btn_reports)
+            lambda: self.change_page(5, self.btn_reports)
         )
 
         main_layout.addWidget(sidebar)
@@ -151,6 +174,12 @@ class MainWindow(QWidget):
         self.setLayout(main_layout)
 
         self.change_page(0, self.btn_dashboard)
+
+    def open_issue_voucher(self):
+        dialog = IssueVoucherDialog(self)
+        if dialog.exec():
+            refresh_manager.data_changed.emit()
+            refresh_manager.products_changed.emit()
 
     def _set_sidebar_icon(self, button, active=False):
         normal_icon, active_icon = self.icon_files[button]
@@ -170,6 +199,7 @@ class MainWindow(QWidget):
             self.btn_add,
             self.btn_search,
             self.btn_products,
+            self.btn_subwarehouses,
             self.btn_reports,
         ]
 

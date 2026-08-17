@@ -144,6 +144,18 @@ class IssueRepository:
         workbook.close()
         return result
 
+    def get_closed_issues_for_rep(self, representative):
+        workbook = load_workbook(self.file, data_only=True)
+        sheet = workbook["Issue_Headers"]
+        result = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if not row[0]:
+                continue
+            if str(row[2] or "").strip() == str(representative).strip() and str(row[3] or "").strip() == "مغلق":
+                result.append({"issue_no": str(row[0]), "date": row[1], "representative": row[2], "status": row[3]})
+        workbook.close()
+        return result
+
     def get_subwarehouses(self):
         workbook = load_workbook(self.file, data_only=True)
         sheet = workbook["Subwarehouse_Stock"]
@@ -300,7 +312,6 @@ class IssueRepository:
         issue_headers = workbook["Issue_Headers"]
         now = datetime.now()
 
-        # Verify all return quantities are actually present in the representative stock before changing anything.
         for line in normalized:
             if line["counted"] <= 0:
                 continue
@@ -331,8 +342,7 @@ class IssueRepository:
                     target_row = row
                     break
             current = float(stock_sheet.cell(target_row, 4).value or 0)
-            new_qty = current - counted
-            stock_sheet.cell(target_row, 4).value = new_qty
+            stock_sheet.cell(target_row, 4).value = current - counted
             stock_sheet.cell(target_row, 5).value = now.strftime("%Y-%m-%d %H:%M:%S")
 
             transaction_id = f"TR{transactions.max_row:05d}"
@@ -347,7 +357,6 @@ class IssueRepository:
                 line["batch_code"],
             ])
 
-        # Close the issue only after all return rows and audit rows have been written.
         for row in issue_headers.iter_rows(min_row=2):
             if str(row[0].value).strip() == issue_no:
                 row[3].value = "مغلق"

@@ -8,7 +8,7 @@ from database.batches import BatchRepository
 
 class TransactionRepository:
 
-    TRANSACTION_IN_TYPES = ["إنتاج", "مشتريات", "مردودات مبيعات"]
+    TRANSACTION_IN_TYPES = ["إنتاج", "مشتريات", "مردودات مبيعات", "مردودات تسليمات"]
     TRANSACTION_OUT_TYPES = ["صرف للتجزئة", "صرف للتسليمات"]
 
     def __init__(self):
@@ -118,9 +118,8 @@ class TransactionRepository:
             total_out = 0.0
 
             for batch in batches:
-                batch_opening = float(batch["opening_balance"] or 0)
                 batch_in, batch_out, _ = self.get_batch_balance(product, batch["code"])
-                total_opening += batch_opening
+                total_opening += float(batch["opening_balance"] or 0)
                 total_in += batch_in
                 total_out += batch_out
 

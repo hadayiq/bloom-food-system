@@ -14,6 +14,7 @@ from PySide6.QtCore import Qt
 
 from database.issues import IssueRepository
 from ui.count_voucher_dialog import CountVoucherDialog
+from ui.liquidation_dialog import LiquidationDialog
 from utils.refresh_manager import refresh_manager
 
 
@@ -143,6 +144,38 @@ class SubwarehousesPage(QWidget):
                 count_button.setText("تم الجرد" if already_counted else "جرد")
                 count_button.clicked.connect(lambda _=False, no=issue["issue_no"]: self.open_count(no))
                 row.addWidget(count_button)
+
+                if already_counted:
+                    liquidated = self.repo.has_liquidation(issue["issue_no"])
+                    liquidate_button = QPushButton("تمت التصفية" if liquidated else "تصفية")
+                    liquidate_button.setObjectName("secondary_button" if liquidated else "primary_button")
+                    liquidate_button.setMinimumHeight(40)
+                    liquidate_button.setCursor(Qt.PointingHandCursor)
+                    liquidate_button.setEnabled(not liquidated)
+                    liquidate_button.clicked.connect(lambda _=False, no=issue["issue_no"]: self.open_liquidation(no))
+                    row.addWidget(liquidate_button)
+
+                self.content_layout.addWidget(card)
+
+        closed_title = QLabel("الأذون المكتملة")
+        closed_title.setObjectName("section_title")
+        self.content_layout.addWidget(closed_title)
+        closed = self.repo.get_closed_issues_for_rep(representative)
+        if not closed:
+            self.content_layout.addWidget(QLabel("لا توجد أذون مكتملة بعد."))
+        else:
+            for issue in closed:
+                card = QFrame()
+                card.setObjectName("transaction_card")
+                row = QHBoxLayout(card)
+                row.setContentsMargins(14, 10, 14, 10)
+                label = QLabel(f"إذن {issue['issue_no']} — {issue['date']}")
+                label.setObjectName("section_description")
+                row.addWidget(label, 1)
+                done = QLabel("● مكتمل")
+                done.setObjectName("success_text")
+                done.setAlignment(Qt.AlignCenter)
+                row.addWidget(done)
                 self.content_layout.addWidget(card)
 
         table_title = QLabel("الرصيد الحالي في السيارة")
@@ -176,5 +209,10 @@ class SubwarehousesPage(QWidget):
 
     def open_count(self, issue_no):
         dialog = CountVoucherDialog(issue_no, self)
+        if dialog.exec():
+            self.show_rep(self.selected_rep)
+
+    def open_liquidation(self, issue_no):
+        dialog = LiquidationDialog(issue_no, self)
         if dialog.exec():
             self.show_rep(self.selected_rep)

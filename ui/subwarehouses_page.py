@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from database.issues import IssueRepository
+from ui.count_voucher_dialog import CountVoucherDialog
 from utils.refresh_manager import refresh_manager
 
 
@@ -62,7 +63,8 @@ class SubwarehousesPage(QWidget):
         self._clear()
         totals = self.repo.get_subwarehouses()
         open_issues = self.repo.get_open_issues()
-        reps = sorted(set(totals) | {item["representative"] for item in open_issues})
+        open_reps = {item["representative"] for item in open_issues}
+        reps = sorted(set(totals) | open_reps)
 
         if not reps:
             empty = QLabel("لا توجد مخازن فرعية حتى الآن. عند حفظ أول إذن صرف سيظهر المندوب هنا.")
@@ -72,7 +74,7 @@ class SubwarehousesPage(QWidget):
             return
 
         for rep in reps:
-            self._add_rep_card(rep, totals.get(rep, 0.0), rep in {x["representative"] for x in open_issues})
+            self._add_rep_card(rep, totals.get(rep, 0.0), rep in open_reps)
         self.content_layout.addStretch()
 
     def _add_rep_card(self, representative, total, is_open):
@@ -124,9 +126,28 @@ class SubwarehousesPage(QWidget):
             issue_title.setObjectName("section_title")
             self.content_layout.addWidget(issue_title)
             for issue in issues:
+                card = QFrame()
+                card.setObjectName("transaction_card")
+                row = QHBoxLayout(card)
+                row.setContentsMargins(14, 10, 14, 10)
                 label = QLabel(f"إذن {issue['issue_no']} — {issue['date']}")
                 label.setObjectName("section_description")
-                self.content_layout.addWidget(label)
+                row.addWidget(label, 1)
+
+                count_button = QPushButton("جرد")
+                count_button.setObjectName("primary_button")
+                count_button.setMinimumHeight(40)
+                count_button.setCursor(Qt.PointingHandCursor)
+                already_counted = self.repo.has_count(issue["issue_no"])
+                count_button.setEnabled(not already_counted)
+                count_button.setText("تم الجرد" if already_counted else "جرد")
+                count_button.clicked.connect(lambda _=False, no=issue["issue_no"]: self.open_count(no))
+                row.addWidget(count_button)
+                self.content_layout.addWidget(card)
+
+        table_title = QLabel("الرصيد الحالي في السيارة")
+        table_title.setObjectName("section_title")
+        self.content_layout.addWidget(table_title)
 
         table = QTableWidget()
         table.setColumnCount(4)
@@ -152,3 +173,8 @@ class SubwarehousesPage(QWidget):
 
         self.content_layout.addWidget(table)
         self.content_layout.addStretch()
+
+    def open_count(self, issue_no):
+        dialog = CountVoucherDialog(issue_no, self)
+        if dialog.exec():
+            self.show_rep(self.selected_rep)

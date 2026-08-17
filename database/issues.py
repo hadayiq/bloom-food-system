@@ -16,6 +16,8 @@ class IssueRepository:
     STOCK_HEADERS = ["Representative", "Product", "Batch_Code", "Quantity", "Updated_At"]
     COUNT_HEADERS = ["Issue_No", "Count_Date", "Representative", "Status"]
     COUNT_LINE_HEADERS = ["Issue_No", "Line_No", "Product", "Batch_Code", "Expiry_Date", "Issued_Quantity", "Counted_Quantity"]
+    LIQUIDATION_HEADERS = ["Issue_No", "Liquidation_Date", "Representative", "Total_Issued", "Total_Count", "Total_Sold", "Status"]
+    LIQUIDATION_LINE_HEADERS = ["Issue_No", "Line_No", "Product", "Batch_Code", "Expiry_Date", "Issued_Quantity", "Counted_Quantity", "Sold_Quantity"]
 
     def __init__(self):
         self.file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "inventory.xlsx")
@@ -33,6 +35,8 @@ class IssueRepository:
             ("Subwarehouse_Stock", self.STOCK_HEADERS),
             ("Count_Headers", self.COUNT_HEADERS),
             ("Count_Lines", self.COUNT_LINE_HEADERS),
+            ("Liquidation_Headers", self.LIQUIDATION_HEADERS),
+            ("Liquidation_Lines", self.LIQUIDATION_LINE_HEADERS),
         ]:
             if name not in workbook.sheetnames:
                 sheet = workbook.create_sheet(name)
@@ -250,3 +254,105 @@ class IssueRepository:
         workbook.close()
         header["lines"] = result
         return header
+
+    def has_liquidation(self, issue_no):
+        workbook = load_workbook(self.file, data_only=True)
+        sheet = workbook["Liquidation_Headers"]
+        found = any(str(row[0]).strip() == str(issue_no).strip() for row in sheet.iter_rows(min_row=2, values_only=True) if row[0] is not None)
+        workbook.close()
+        return found
+
+    def liquidate_issue(self, issue_no):
+        issue_no = str(issue_no).strip()
+        issue = self.get_issue(issue_no)
+        count = self.get_count(issue_no)
+        if not issue:
+            raise ValueError("إذن الصرف غير موجود.")
+        if issue["status"] == "مغلق":
+            raise ValueError("إذن الصرف مغلق بالفعل.")
+        if not count:
+            raise ValueError("يجب تسجيل الجرد أولًا.")
+        if self.has_liquidation(issue_no):
+            raise ValueError("تمت تصفية هذا الإذن بالفعل.")
+
+        count_map = {(str(x["product"]).strip(), str(x["batch_code"]).strip().lower()): float(x["counted_quantity"] or 0) for x in count["lines"]}
+        normalized = []
+        total_issued = total_counted = total_sold = 0.0
+        for original in issue["lines"]:
+            key = (str(original["product"]).strip(), str(original["batch_code"]).strip().lower())
+            if key not in count_map:
+                raise ValueError(f"الجرد ناقص للصنف: {original['product']}")
+            issued = float(original["quantity"] or 0)
+            counted = float(count_map[key] or 0)
+            if counted < 0 or counted > issued:
+                raise ValueError(f"كمية الجرد غير صحيحة للصنف: {original['product']}")
+            sold = issued - counted
+            normalized.append({**original, "counted": counted, "sold": sold})
+            total_issued += issued
+            total_counted += counted
+            total_sold += sold
+
+        workbook = load_workbook(self.file)
+        liquidation_headers = workbook["Liquidation_Headers"]
+        liquidation_lines = workbook["Liquidation_Lines"]
+        stock_sheet = workbook["Subwarehouse_Stock"]
+        transactions = workbook["Transactions"]
+        issue_headers = workbook["Issue_Headers"]
+        now = datetime.now()
+
+        # Verify all return quantities are actually present in the representative stock before changing anything.
+        for line in normalized:
+            if line["counted"] <= 0:
+                continue
+            found = None
+            for row in range(2, stock_sheet.max_row + 1):
+                if (str(stock_sheet.cell(row, 1).value or "").strip() == str(issue["representative"]).strip()
+                        and str(stock_sheet.cell(row, 2).value or "").strip() == str(line["product"]).strip()
+                        and str(stock_sheet.cell(row, 3).value or "").strip().lower() == str(line["batch_code"] or "").strip().lower()):
+                    found = row
+                    break
+            if found is None or float(stock_sheet.cell(found, 4).value or 0) < line["counted"]:
+                workbook.close()
+                raise ValueError(f"رصيد المندوب غير كافٍ لإرجاع الجرد: {line['product']}")
+
+        liquidation_headers.append([issue_no, now.strftime("%Y-%m-%d"), issue["representative"], total_issued, total_counted, total_sold, "مغلق"])
+
+        for index, line in enumerate(normalized, start=1):
+            liquidation_lines.append([issue_no, index, line["product"], line["batch_code"], line["expiry_date"], line["quantity"], line["counted"], line["sold"]])
+            counted = line["counted"]
+            if counted <= 0:
+                continue
+
+            target_row = None
+            for row in range(2, stock_sheet.max_row + 1):
+                if (str(stock_sheet.cell(row, 1).value or "").strip() == str(issue["representative"]).strip()
+                        and str(stock_sheet.cell(row, 2).value or "").strip() == str(line["product"]).strip()
+                        and str(stock_sheet.cell(row, 3).value or "").strip().lower() == str(line["batch_code"] or "").strip().lower()):
+                    target_row = row
+                    break
+            current = float(stock_sheet.cell(target_row, 4).value or 0)
+            new_qty = current - counted
+            stock_sheet.cell(target_row, 4).value = new_qty
+            stock_sheet.cell(target_row, 5).value = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            transaction_id = f"TR{transactions.max_row:05d}"
+            transactions.append([
+                transaction_id,
+                now.strftime("%Y-%m-%d"),
+                now.strftime("%H:%M:%S"),
+                line["product"],
+                "مردودات تسليمات",
+                counted,
+                f"مرتجع جرد إذن {issue_no} - {issue['representative']}",
+                line["batch_code"],
+            ])
+
+        # Close the issue only after all return rows and audit rows have been written.
+        for row in issue_headers.iter_rows(min_row=2):
+            if str(row[0].value).strip() == issue_no:
+                row[3].value = "مغلق"
+                break
+
+        workbook.save(self.file)
+        workbook.close()
+        return {"issued": total_issued, "counted": total_counted, "sold": total_sold}

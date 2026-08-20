@@ -40,8 +40,7 @@ class MainWindow(QWidget):
         main_layout.setSpacing(0)
 
         # -------------------------------------------------------------
-        # Sidebar — intentionally kept focused: logo, navigation,
-        # admin card, and three utility actions at the bottom.
+        # Sidebar — focused navigation, based on the selected reference.
         # -------------------------------------------------------------
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
@@ -52,10 +51,16 @@ class MainWindow(QWidget):
         sidebar_layout.setContentsMargins(18, 18, 18, 16)
         sidebar_layout.setSpacing(6)
 
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        icons_dir = os.path.join(base_dir, "icons")
+
         # Logo / brand block
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
-        logo.setPixmap(QPixmap(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "bloom_logo.svg")))
+        self.sidebar_logo = logo
+        self.sidebar_logo_dark = os.path.join(icons_dir, "bloom_logo.svg")
+        self.sidebar_logo_light = os.path.join(icons_dir, "bloom_logo_light.svg")
+        logo.setPixmap(QPixmap(self.sidebar_logo_dark))
         logo.setScaledContents(True)
         logo.setFixedHeight(64)
         logo.setAlignment(Qt.AlignCenter)
@@ -77,9 +82,6 @@ class MainWindow(QWidget):
         self.btn_subwarehouses = QPushButton("المخازن الفرعية")
         self.btn_reports = QPushButton("التقارير")
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        icons_dir = os.path.join(base_dir, "icons")
-
         self.icon_files = {
             self.btn_dashboard: ("dashboard.svg", "dashboard_active.svg"),
             self.btn_add: ("transaction.svg", "transaction_active.svg"),
@@ -89,22 +91,17 @@ class MainWindow(QWidget):
             self.btn_reports: ("reports.svg", "reports_active.svg"),
         }
 
-        icon_size = QSize(22, 22)
-        buttons = list(self.icon_files.keys())
-
         for button, (icon_name, _) in self.icon_files.items():
-            icon_path = os.path.join(icons_dir, icon_name)
-            button.setIcon(QIcon(icon_path))
-            button.setIconSize(icon_size)
+            button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
+            button.setIconSize(QSize(22, 22))
 
-        for button in buttons:
+        for button in self.icon_files:
             button.setObjectName("sidebar_button")
             button.setCursor(Qt.PointingHandCursor)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.RightToLeft)
             sidebar_layout.addWidget(button)
 
-        # Keep the navigation visually separated from utility actions.
         sidebar_layout.addStretch(1)
 
         # Admin profile card
@@ -136,7 +133,7 @@ class MainWindow(QWidget):
         sidebar_layout.addWidget(admin_card)
         sidebar_layout.addSpacing(8)
 
-        # Three utility buttons shown at the bottom of the reference design.
+        # Three utility buttons from the reference design.
         utility_row = QHBoxLayout()
         utility_row.setContentsMargins(0, 0, 0, 0)
         utility_row.setSpacing(7)
@@ -221,12 +218,13 @@ class MainWindow(QWidget):
     def toggle_sidebar_theme(self):
         self._sidebar_light = not self._sidebar_light
         self.sidebar.setProperty("lightMode", self._sidebar_light)
+        self.sidebar_logo.setPixmap(
+            QPixmap(self.sidebar_logo_light if self._sidebar_light else self.sidebar_logo_dark)
+        )
         self._refresh_style(self.sidebar)
         self.btn_theme.setToolTip(
             "الوضع الداكن للشريط الجانبي" if self._sidebar_light else "الوضع الفاتح للشريط الجانبي"
         )
-
-        # Re-polish active navigation so its contrast follows the sidebar mode.
         self.change_page(self.stack.currentIndex(), self._active_button())
 
     def _active_button(self):
@@ -242,11 +240,7 @@ class MainWindow(QWidget):
         widget.update()
 
     def show_notifications(self):
-        QMessageBox.information(
-            self,
-            "التنبيهات",
-            "لا توجد تنبيهات جديدة حاليًا.",
-        )
+        QMessageBox.information(self, "التنبيهات", "لا توجد تنبيهات جديدة حاليًا.")
 
     def confirm_exit(self):
         answer = QMessageBox.question(

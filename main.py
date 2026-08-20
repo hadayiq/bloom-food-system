@@ -13,7 +13,16 @@ with open("styles/bloom.qss", "r", encoding="utf-8") as file:
 with open("styles/ui_v1.qss", "r", encoding="utf-8") as file:
     ui_v1_styles = file.read()
 
-app.setStyleSheet(base_styles + "\n\n" + ui_v1_styles)
+with open("styles/ui_v2_components.qss", "r", encoding="utf-8") as file:
+    ui_v2_component_styles = file.read()
+
+app.setStyleSheet(
+    base_styles
+    + "\n\n"
+    + ui_v1_styles
+    + "\n\n"
+    + ui_v2_component_styles
+)
 
 
 window = MainWindow()

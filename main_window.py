@@ -9,9 +9,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QStackedWidget,
     QSizePolicy,
+    QMessageBox,
 )
 
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Qt, QSize
 
 from ui.inventory_summary_page import InventorySummaryPage
@@ -28,43 +29,48 @@ from utils.refresh_manager import refresh_manager
 class MainWindow(QWidget):
 
     def __init__(self):
-
         super().__init__()
 
         self.setWindowTitle("Bloom Food - Inventory System")
         self.resize(1250, 750)
+        self._sidebar_light = False
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        # -------------------------------------------------------------
+        # Sidebar — intentionally kept focused: logo, navigation,
+        # admin card, and three utility actions at the bottom.
+        # -------------------------------------------------------------
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(250)
+        sidebar.setFixedWidth(270)
+        self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout()
-        sidebar_layout.setContentsMargins(18, 24, 18, 18)
+        sidebar_layout.setContentsMargins(18, 18, 18, 16)
         sidebar_layout.setSpacing(6)
 
-        company_name = QLabel("BLOOM FOOD")
-        company_name.setObjectName("company_name")
-
-        company_subtitle = QLabel("Inventory Management")
-        company_subtitle.setObjectName("company_subtitle")
-
-        sidebar_layout.addWidget(company_name)
-        sidebar_layout.addWidget(company_subtitle)
-        sidebar_layout.addSpacing(12)
+        # Logo / brand block
+        logo = QLabel()
+        logo.setObjectName("sidebar_logo")
+        logo.setPixmap(QPixmap(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", "bloom_logo.svg")))
+        logo.setScaledContents(True)
+        logo.setFixedHeight(64)
+        logo.setAlignment(Qt.AlignCenter)
+        sidebar_layout.addWidget(logo)
+        sidebar_layout.addSpacing(8)
 
         sidebar_line = QFrame()
         sidebar_line.setObjectName("sidebar_line")
         sidebar_line.setFrameShape(QFrame.HLine)
         sidebar_line.setFrameShadow(QFrame.Plain)
-
         sidebar_layout.addWidget(sidebar_line)
-        sidebar_layout.addSpacing(18)
+        sidebar_layout.addSpacing(14)
 
-        self.btn_dashboard = QPushButton("Dashboard")
+        # Navigation
+        self.btn_dashboard = QPushButton("الرئيسية")
         self.btn_add = QPushButton("إضافة حركة")
         self.btn_search = QPushButton("كارت الصنف")
         self.btn_products = QPushButton("إدارة الأصناف")
@@ -84,26 +90,12 @@ class MainWindow(QWidget):
         }
 
         icon_size = QSize(22, 22)
+        buttons = list(self.icon_files.keys())
 
         for button, (icon_name, _) in self.icon_files.items():
             icon_path = os.path.join(icons_dir, icon_name)
-            icon = QIcon(icon_path)
-            print(
-                f"[ICON] {icon_name} | "
-                f"EXISTS={os.path.exists(icon_path)} | "
-                f"NULL={icon.isNull()}"
-            )
-            button.setIcon(icon)
+            button.setIcon(QIcon(icon_path))
             button.setIconSize(icon_size)
-
-        buttons = [
-            self.btn_dashboard,
-            self.btn_add,
-            self.btn_search,
-            self.btn_products,
-            self.btn_subwarehouses,
-            self.btn_reports,
-        ]
 
         for button in buttons:
             button.setObjectName("sidebar_button")
@@ -112,15 +104,63 @@ class MainWindow(QWidget):
             button.setLayoutDirection(Qt.RightToLeft)
             sidebar_layout.addWidget(button)
 
-        sidebar_layout.addStretch()
+        # Keep the navigation visually separated from utility actions.
+        sidebar_layout.addStretch(1)
 
-        footer = QLabel("Bloom Food\n" "Inventory System")
-        footer.setObjectName("sidebar_footer")
-        footer.setAlignment(Qt.AlignCenter)
-        sidebar_layout.addWidget(footer)
+        # Admin profile card
+        admin_card = QFrame()
+        admin_card.setObjectName("admin_card")
+        admin_layout = QHBoxLayout(admin_card)
+        admin_layout.setContentsMargins(10, 9, 10, 9)
+        admin_layout.setSpacing(10)
+        admin_layout.setDirection(QHBoxLayout.RightToLeft)
+
+        avatar = QLabel()
+        avatar.setObjectName("admin_avatar")
+        avatar.setPixmap(QPixmap(os.path.join(icons_dir, "admin_avatar.svg")))
+        avatar.setFixedSize(40, 40)
+        avatar.setScaledContents(True)
+
+        admin_text = QVBoxLayout()
+        admin_text.setContentsMargins(0, 0, 0, 0)
+        admin_text.setSpacing(1)
+        admin_name = QLabel("Admin")
+        admin_name.setObjectName("admin_name")
+        admin_role = QLabel("مدير النظام")
+        admin_role.setObjectName("admin_role")
+        admin_text.addWidget(admin_name)
+        admin_text.addWidget(admin_role)
+
+        admin_layout.addWidget(avatar)
+        admin_layout.addLayout(admin_text, 1)
+        sidebar_layout.addWidget(admin_card)
+        sidebar_layout.addSpacing(8)
+
+        # Three utility buttons shown at the bottom of the reference design.
+        utility_row = QHBoxLayout()
+        utility_row.setContentsMargins(0, 0, 0, 0)
+        utility_row.setSpacing(7)
+
+        self.btn_theme = self._make_sidebar_utility_button(
+            "sidebar_sun.svg", "تغيير مظهر الشريط الجانبي"
+        )
+        self.btn_notifications = self._make_sidebar_utility_button(
+            "sidebar_bell.svg", "التنبيهات"
+        )
+        self.btn_exit = self._make_sidebar_utility_button(
+            "sidebar_logout.svg", "خروج من البرنامج"
+        )
+
+        utility_row.addWidget(self.btn_theme)
+        utility_row.addWidget(self.btn_notifications)
+        utility_row.addWidget(self.btn_exit)
+        sidebar_layout.addLayout(utility_row)
 
         sidebar.setLayout(sidebar_layout)
 
+        # -------------------------------------------------------------
+        # Content
+        # -------------------------------------------------------------
         self.stack = QStackedWidget()
         self.stack.setObjectName("content_area")
 
@@ -131,9 +171,6 @@ class MainWindow(QWidget):
         self.subwarehouses_page = SubwarehousesPage()
         self.reports_page = ReportsPage()
 
-        # The issue voucher belongs to the Add Transaction workflow, but is a
-        # separate multi-line document so the user never has to enter 27
-        # individual transactions for one delivery.
         issue_button = QPushButton("＋  إضافة إذن صرف")
         issue_button.setObjectName("secondary_button")
         issue_button.setMinimumHeight(50)
@@ -154,26 +191,73 @@ class MainWindow(QWidget):
         refresh_manager.products_changed.connect(self.dashboard_page.load_data)
         refresh_manager.data_changed.connect(self.subwarehouses_page.load_data)
 
-        self.btn_dashboard.clicked.connect(
-            lambda: self.change_page(0, self.btn_dashboard)
-        )
+        self.btn_dashboard.clicked.connect(lambda: self.change_page(0, self.btn_dashboard))
         self.btn_add.clicked.connect(lambda: self.change_page(1, self.btn_add))
         self.btn_search.clicked.connect(lambda: self.change_page(2, self.btn_search))
-        self.btn_products.clicked.connect(
-            lambda: self.change_page(3, self.btn_products)
-        )
-        self.btn_subwarehouses.clicked.connect(
-            lambda: self.change_page(4, self.btn_subwarehouses)
-        )
-        self.btn_reports.clicked.connect(
-            lambda: self.change_page(5, self.btn_reports)
-        )
+        self.btn_products.clicked.connect(lambda: self.change_page(3, self.btn_products))
+        self.btn_subwarehouses.clicked.connect(lambda: self.change_page(4, self.btn_subwarehouses))
+        self.btn_reports.clicked.connect(lambda: self.change_page(5, self.btn_reports))
+
+        self.btn_theme.clicked.connect(self.toggle_sidebar_theme)
+        self.btn_notifications.clicked.connect(self.show_notifications)
+        self.btn_exit.clicked.connect(self.confirm_exit)
 
         main_layout.addWidget(sidebar)
         main_layout.addWidget(self.stack)
         self.setLayout(main_layout)
 
         self.change_page(0, self.btn_dashboard)
+
+    def _make_sidebar_utility_button(self, icon_name, tooltip):
+        button = QPushButton()
+        button.setObjectName("sidebar_utility_button")
+        button.setIcon(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "icons", icon_name)))
+        button.setIconSize(QSize(21, 21))
+        button.setToolTip(tooltip)
+        button.setCursor(Qt.PointingHandCursor)
+        button.setFixedSize(46, 42)
+        return button
+
+    def toggle_sidebar_theme(self):
+        self._sidebar_light = not self._sidebar_light
+        self.sidebar.setProperty("lightMode", self._sidebar_light)
+        self._refresh_style(self.sidebar)
+        self.btn_theme.setToolTip(
+            "الوضع الداكن للشريط الجانبي" if self._sidebar_light else "الوضع الفاتح للشريط الجانبي"
+        )
+
+        # Re-polish active navigation so its contrast follows the sidebar mode.
+        self.change_page(self.stack.currentIndex(), self._active_button())
+
+    def _active_button(self):
+        for button in self.icon_files:
+            if button.property("active") is True:
+                return button
+        return self.btn_dashboard
+
+    @staticmethod
+    def _refresh_style(widget):
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+        widget.update()
+
+    def show_notifications(self):
+        QMessageBox.information(
+            self,
+            "التنبيهات",
+            "لا توجد تنبيهات جديدة حاليًا.",
+        )
+
+    def confirm_exit(self):
+        answer = QMessageBox.question(
+            self,
+            "خروج",
+            "هل تريد إغلاق نظام Bloom Food؟",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer == QMessageBox.Yes:
+            self.close()
 
     def open_issue_voucher(self):
         dialog = IssueVoucherDialog(self)
@@ -207,6 +291,4 @@ class MainWindow(QWidget):
             is_active = button == active_button
             button.setProperty("active", is_active)
             self._set_sidebar_icon(button, is_active)
-            button.style().unpolish(button)
-            button.style().polish(button)
-            button.update()
+            self._refresh_style(button)

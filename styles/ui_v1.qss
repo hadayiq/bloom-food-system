@@ -1,9 +1,8 @@
 /* =========================================================
-   BLOOM FOOD — UI V1 POLISH LAYER
+   BLOOM FOOD — UI V2 POLISH LAYER
    UI ONLY — no business logic changes
    ========================================================= */
 
-/* ---------- Application surface ---------- */
 QWidget {
     font-family: "Segoe UI";
 }
@@ -18,7 +17,7 @@ QWidget#content_area {
     background: #F7F9F7;
 }
 
-/* ---------- Dashboard ---------- */
+/* ---------- Dashboard / page typography ---------- */
 QLabel#dashboard_title,
 QLabel#page_title {
     color: #244C2B;
@@ -47,66 +46,166 @@ QLabel#section_title {
     padding: 4px 0;
 }
 
-/* ---------- Sidebar ---------- */
+/* =========================================================
+   SIDEBAR V2
+   Reference: dark compact navigation with logo, active item,
+   admin profile and three utility actions.
+   ========================================================= */
 QFrame#sidebar {
+    background: #142235;
+    border: none;
+    border-right: 1px solid #243750;
+}
+
+QFrame#sidebar[lightMode="true"] {
     background: #FFFFFF;
     border-right: 1px solid #D8E3DA;
 }
 
-QPushButton#sidebar_button {
-    min-height: 50px;
-    border-radius: 12px;
-    padding: 11px 16px;
-    color: #33463B;
+QLabel#sidebar_logo {
     background: transparent;
-    font-size: 11pt;
+    padding: 0;
+}
+
+QFrame#sidebar_line {
+    background: #2A3C53;
+    color: #2A3C53;
+    min-height: 1px;
+    max-height: 1px;
+    border: none;
+}
+
+QFrame#sidebar[lightMode="true"] QFrame#sidebar_line {
+    background: #E1E9E2;
+    color: #E1E9E2;
+}
+
+QPushButton#sidebar_button {
+    min-height: 46px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #AFC2B6;
+    background: transparent;
+    font-size: 10.8pt;
     font-weight: 650;
     text-align: right;
     border: 1px solid transparent;
 }
 
 QPushButton#sidebar_button:hover {
-    background: #EAF4EA;
-    color: #24632B;
-    border-color: #D6E8D7;
+    background: #1E3047;
+    color: #FFFFFF;
+    border-color: #2C4059;
     font-weight: 750;
 }
 
 QPushButton#sidebar_button:pressed {
-    background: #DDEDDD;
-    color: #205B27;
+    background: #263C57;
+    color: #FFFFFF;
 }
 
 QPushButton#sidebar_button[active="true"] {
-    background: #438E46;
+    background: #246BDE;
     color: #FFFFFF;
     font-weight: 800;
-    border-color: #438E46;
+    border-color: #246BDE;
 }
 
 QPushButton#sidebar_button[active="true"]:hover {
-    background: #397A3C;
-    border-color: #397A3C;
+    background: #2D78F0;
+    border-color: #2D78F0;
     color: #FFFFFF;
 }
 
-QLabel#company_name {
-    color: #438E46;
-    font-size: 20pt;
-    font-weight: 800;
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_button {
+    color: #526158;
 }
 
-QLabel#company_subtitle,
-QLabel#sidebar_footer {
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_button:hover {
+    background: #EEF6EE;
+    color: #2F6B37;
+    border-color: #D6E8D7;
+}
+
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_button[active="true"] {
+    background: #438E46;
+    border-color: #438E46;
+    color: #FFFFFF;
+}
+
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_button[active="true"]:hover {
+    background: #397A3C;
+    border-color: #397A3C;
+}
+
+QFrame#admin_card {
+    background: #1D2E43;
+    border: 1px solid #2D4059;
+    border-radius: 13px;
+}
+
+QFrame#admin_card:hover {
+    background: #21364E;
+    border-color: #3A526D;
+}
+
+QFrame#sidebar[lightMode="true"] QFrame#admin_card {
+    background: #F3F7F4;
+    border-color: #DDE7DF;
+}
+
+QLabel#admin_avatar {
+    background: transparent;
+}
+
+QLabel#admin_name {
+    color: #FFFFFF;
+    font-size: 10.5pt;
+    font-weight: 750;
+    background: transparent;
+}
+
+QLabel#admin_role {
+    color: #91A6B8;
+    font-size: 8.5pt;
+    background: transparent;
+}
+
+QFrame#sidebar[lightMode="true"] QLabel#admin_name {
+    color: #24372B;
+}
+
+QFrame#sidebar[lightMode="true"] QLabel#admin_role {
     color: #78877E;
 }
 
-QFrame#sidebar_line {
-    color: #E1E9E2;
-    background: #E1E9E2;
-    min-height: 1px;
-    max-height: 1px;
-    border: none;
+QPushButton#sidebar_utility_button {
+    background: #1D2E43;
+    color: #AFC2B6;
+    border: 1px solid #2D4059;
+    border-radius: 10px;
+    padding: 0;
+}
+
+QPushButton#sidebar_utility_button:hover {
+    background: #263B55;
+    border-color: #3B5470;
+}
+
+QPushButton#sidebar_utility_button:pressed {
+    background: #246BDE;
+    border-color: #246BDE;
+}
+
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_utility_button {
+    background: #FFFFFF;
+    border-color: #D9E3DB;
+    color: #5E6F64;
+}
+
+QFrame#sidebar[lightMode="true"] QPushButton#sidebar_utility_button:hover {
+    background: #EEF6EE;
+    border-color: #BFD5C1;
 }
 
 /* ---------- KPI / Summary cards ---------- */
@@ -118,10 +217,6 @@ QFrame#summary_card {
     min-height: 126px;
 }
 
-/* Transaction cards contain dynamic forms and tables.
-   Do NOT impose a fixed minimum height here: QWidget minimumSize
-   from a stylesheet can override the layout's calculated minimum
-   size and cause labels/fields/buttons to overlap. */
 QFrame#transaction_card {
     background: #FFFFFF;
     border: 1px solid #DCE6DE;
@@ -135,26 +230,12 @@ QFrame#transaction_card:hover {
     border-color: #72A874;
 }
 
-QFrame#kpi_card[class="kpi_green"] {
-    border-top: 4px solid #438E46;
-}
+QFrame#kpi_card[class="kpi_green"] { border-top: 4px solid #438E46; }
+QFrame#kpi_card[class="kpi_blue"] { border-top: 4px solid #4D7FA8; }
+QFrame#kpi_card[class="kpi_orange"] { border-top: 4px solid #C88945; }
+QFrame#kpi_card[class="kpi_purple"] { border-top: 4px solid #7D68A8; }
 
-QFrame#kpi_card[class="kpi_blue"] {
-    border-top: 4px solid #4D7FA8;
-}
-
-QFrame#kpi_card[class="kpi_orange"] {
-    border-top: 4px solid #C88945;
-}
-
-QFrame#kpi_card[class="kpi_purple"] {
-    border-top: 4px solid #7D68A8;
-}
-
-/* Hover feedback is intentionally stronger on the whole card. */
-QFrame#kpi_card:hover QLabel#kpi_icon {
-    background: transparent;
-}
+QFrame#kpi_card:hover QLabel#kpi_icon { background: transparent; }
 
 QFrame#kpi_card:hover QLabel#kpi_title,
 QFrame#summary_card:hover QLabel#card_title,
@@ -163,9 +244,7 @@ QFrame#transaction_card:hover QLabel#card_title {
     font-weight: 750;
 }
 
-QFrame#kpi_card:hover QLabel#kpi_value {
-    color: #287332;
-}
+QFrame#kpi_card:hover QLabel#kpi_value { color: #287332; }
 
 QLabel#kpi_icon {
     min-height: 28px;
@@ -194,9 +273,7 @@ QLabel#balance_value {
 
 /* ---------- Dashboard table ---------- */
 QTableWidget#inventory_table,
-QTableView#inventory_table {
-    min-height: 300px;
-}
+QTableView#inventory_table { min-height: 300px; }
 
 /* ---------- Forms ---------- */
 QLabel#form_label {
@@ -224,18 +301,14 @@ QComboBox:hover,
 QTextEdit:hover,
 QDateEdit:hover,
 QSpinBox:hover,
-QDoubleSpinBox:hover {
-    border-color: #AFC9B1;
-}
+QDoubleSpinBox:hover { border-color: #AFC9B1; }
 
 QLineEdit:focus,
 QComboBox:focus,
 QTextEdit:focus,
 QDateEdit:focus,
 QSpinBox:focus,
-QDoubleSpinBox:focus {
-    border: 2px solid #4B9A4A;
-}
+QDoubleSpinBox:focus { border: 2px solid #4B9A4A; }
 
 /* ---------- Search ---------- */
 QLineEdit#product_search {
@@ -267,9 +340,7 @@ QListWidget#top_product_search_results::item {
 }
 
 QListWidget#product_search_results::item:hover,
-QListWidget#top_product_search_results::item:hover {
-    background: #EEF6EE;
-}
+QListWidget#top_product_search_results::item:hover { background: #EEF6EE; }
 
 QListWidget#product_search_results::item:selected,
 QListWidget#top_product_search_results::item:selected {
@@ -291,7 +362,6 @@ QTableView {
     outline: none;
 }
 
-/* Strong, clearly separated table header. */
 QTableWidget QHeaderView::section,
 QTableView QHeaderView::section {
     background: #2F6F36;

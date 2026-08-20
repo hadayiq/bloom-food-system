@@ -1,0 +1,178 @@
+/* =========================================================
+   BLOOM FOOD — UI V2 COMPONENT POLISH
+   Cards + card icons + unified message/alert dialogs
+   UI ONLY — no business logic changes
+   ========================================================= */
+
+/* ---------- Unified cards ---------- */
+QFrame#kpi_card,
+QFrame#summary_card,
+QFrame#transaction_card {
+    background: #FFFFFF;
+    border: 1px solid #DCE6DE;
+    border-radius: 16px;
+}
+
+QFrame#kpi_card {
+    min-height: 126px;
+}
+
+QFrame#kpi_card:hover,
+QFrame#summary_card:hover,
+QFrame#transaction_card:hover {
+    background: #F8FCF8;
+    border-color: #78A97B;
+}
+
+/* The small icon block used inside cards */
+QLabel#kpi_icon,
+QLabel#card_icon,
+QLabel#summary_icon,
+QLabel#transaction_icon {
+    background: #EEF6EE;
+    color: #2F7A38;
+    border: none;
+    border-radius: 20px;
+    padding: 8px;
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+}
+
+QFrame#kpi_card[class="kpi_green"] QLabel#kpi_icon {
+    background: #E7F3E7;
+}
+
+QFrame#kpi_card[class="kpi_blue"] QLabel#kpi_icon {
+    background: #EAF2F8;
+}
+
+QFrame#kpi_card[class="kpi_orange"] QLabel#kpi_icon {
+    background: #FFF2E3;
+}
+
+QFrame#kpi_card[class="kpi_purple"] QLabel#kpi_icon {
+    background: #F2ECF8;
+}
+
+QFrame#kpi_card:hover QLabel#kpi_icon,
+QFrame#summary_card:hover QLabel#summary_icon,
+QFrame#transaction_card:hover QLabel#transaction_icon,
+QFrame#kpi_card:hover QLabel#card_icon {
+    background: #E3F1E3;
+}
+
+QLabel#kpi_title,
+QLabel#card_title {
+    color: #53645A;
+    font-size: 10.5pt;
+    font-weight: 650;
+    background: transparent;
+}
+
+QFrame#kpi_card:hover QLabel#kpi_title,
+QFrame#summary_card:hover QLabel#card_title,
+QFrame#transaction_card:hover QLabel#card_title {
+    color: #245C2B;
+}
+
+QLabel#kpi_value,
+QLabel#products_value,
+QLabel#in_value,
+QLabel#out_value,
+QLabel#balance_value {
+    background: transparent;
+    font-weight: 800;
+}
+
+/* ---------- Unified message / alert dialogs ---------- */
+QMessageBox {
+    background: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #DCE6DE;
+    border-radius: 16px;
+    padding: 12px;
+    min-width: 420px;
+}
+
+QMessageBox QLabel {
+    background: transparent;
+    color: #25332A;
+}
+
+QMessageBox QLabel#qt_msgbox_label {
+    color: #25332A;
+    font-size: 12pt;
+    font-weight: 700;
+    padding: 4px 8px;
+}
+
+QMessageBox QLabel#qt_msgbox_informativelabel {
+    color: #6C7A71;
+    font-size: 10.5pt;
+    font-weight: 500;
+    padding: 2px 8px 8px 8px;
+}
+
+/* Give every standard Qt alert icon the same soft circular container. */
+QMessageBox QLabel#qt_msgboxex_icon_label {
+    background: #EEF6EE;
+    border: none;
+    border-radius: 24px;
+    padding: 8px;
+    min-width: 48px;
+    max-width: 48px;
+    min-height: 48px;
+    max-height: 48px;
+}
+
+QMessageBox QDialogButtonBox {
+    background: transparent;
+    margin-top: 8px;
+}
+
+QMessageBox QPushButton {
+    min-height: 40px;
+    min-width: 96px;
+    padding: 8px 20px;
+    border-radius: 9px;
+    border: 1px solid #D5DED6;
+    background: #FFFFFF;
+    color: #4D5B53;
+    font-size: 10.5pt;
+    font-weight: 650;
+}
+
+QMessageBox QPushButton:hover {
+    background: #F0F6F0;
+    border-color: #B5CDB6;
+    color: #2F6B37;
+}
+
+QMessageBox QPushButton:pressed {
+    background: #E3EFE3;
+}
+
+/* Standard destructive/cancel buttons stay visually restrained. */
+QMessageBox QPushButton[text="Cancel"],
+QMessageBox QPushButton[text="إلغاء"] {
+    color: #B83B31;
+    border-color: #E4B8B2;
+}
+
+QMessageBox QPushButton[text="Cancel"]:hover,
+QMessageBox QPushButton[text="إلغاء"]:hover {
+    background: #FFF3F1;
+    border-color: #D78E86;
+}
+
+/* Tooltips follow the same visual language. */
+QToolTip {
+    background: #142235;
+    color: #FFFFFF;
+    border: 1px solid #2A3C53;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 9.5pt;
+}

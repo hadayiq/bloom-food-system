@@ -16,12 +16,17 @@ with open("styles/ui_v1.qss", "r", encoding="utf-8") as file:
 with open("styles/ui_v2_components.qss", "r", encoding="utf-8") as file:
     ui_v2_component_styles = file.read()
 
+with open("styles/modern_inputs.qss", "r", encoding="utf-8") as file:
+    modern_input_styles = file.read()
+
 app.setStyleSheet(
     base_styles
     + "\n\n"
     + ui_v1_styles
     + "\n\n"
     + ui_v2_component_styles
+    + "\n\n"
+    + modern_input_styles
 )
 
 

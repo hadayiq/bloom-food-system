@@ -1,0 +1,189 @@
+/* =========================================================
+   BLOOM FOOD — MODERN INPUT SYSTEM
+   Unified input styling for forms, search, quantities and notes.
+   ========================================================= */
+
+/* Base input controls */
+QLineEdit,
+QComboBox,
+QTextEdit,
+QPlainTextEdit,
+QSpinBox,
+QDoubleSpinBox {
+    background-color: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #CBD8CE;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 10.5pt;
+    selection-background-color: #DDEEDC;
+    selection-color: #243B27;
+}
+
+QLineEdit,
+QComboBox,
+QSpinBox,
+QDoubleSpinBox {
+    min-height: 46px;
+}
+
+QTextEdit,
+QPlainTextEdit {
+    min-height: 108px;
+    padding-top: 12px;
+}
+
+/* Hover */
+QLineEdit:hover,
+QComboBox:hover,
+QTextEdit:hover,
+QPlainTextEdit:hover,
+QSpinBox:hover,
+QDoubleSpinBox:hover {
+    border: 1px solid #9FBEA3;
+    background-color: #FEFFFE;
+}
+
+/* Keyboard focus */
+QLineEdit:focus,
+QComboBox:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 2px solid #4B9A4A;
+    background-color: #FFFFFF;
+}
+
+/* Disabled */
+QLineEdit:disabled,
+QComboBox:disabled,
+QTextEdit:disabled,
+QPlainTextEdit:disabled,
+QSpinBox:disabled,
+QDoubleSpinBox:disabled {
+    background-color: #F1F4F1;
+    color: #9AA59E;
+    border-color: #DCE3DD;
+}
+
+/* Placeholder text */
+QLineEdit {
+    padding-left: 14px;
+    padding-right: 14px;
+}
+
+/* Combo box */
+QComboBox {
+    padding-left: 14px;
+    padding-right: 42px;
+}
+
+QComboBox::drop-down {
+    width: 34px;
+    border: none;
+    border-left: 1px solid #E4EAE5;
+    background: transparent;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #718078;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #D5E0D7;
+    border-radius: 10px;
+    padding: 6px;
+    outline: none;
+    selection-background-color: #E5F1E4;
+    selection-color: #25442B;
+}
+
+QComboBox QAbstractItemView::item {
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 7px;
+}
+
+QComboBox QAbstractItemView::item:hover {
+    background-color: #F0F7EF;
+}
+
+QComboBox QAbstractItemView::item:selected {
+    background-color: #DDEEDC;
+    color: #25442B;
+}
+
+/* Numeric inputs — cleaner alignment and no visible arrows by default */
+QSpinBox,
+QDoubleSpinBox {
+    padding-right: 14px;
+}
+
+QSpinBox::up-button,
+QSpinBox::down-button,
+QDoubleSpinBox::up-button,
+QDoubleSpinBox::down-button {
+    width: 0;
+    border: none;
+    background: transparent;
+}
+
+/* Search fields get a slightly stronger visual hierarchy */
+QLineEdit#product_search,
+QLineEdit#top_product_search {
+    border-radius: 13px;
+    background-color: #FFFFFF;
+    border: 1px solid #C9D8CC;
+}
+
+QLineEdit#product_search:focus,
+QLineEdit#top_product_search:focus {
+    border: 2px solid #4B9A4A;
+}
+
+/* Form labels */
+QLabel#form_label {
+    color: #34453A;
+    font-size: 10pt;
+    font-weight: 700;
+    padding: 0;
+    margin: 0 0 5px 0;
+    min-height: 22px;
+}
+
+/* Optional helper/error labels for future validation */
+QLabel#input_hint {
+    color: #7A867E;
+    font-size: 9pt;
+    padding: 2px 3px 0 3px;
+}
+
+QLabel#input_error {
+    color: #B83B31;
+    font-size: 9pt;
+    font-weight: 600;
+    padding: 3px 3px 0 3px;
+}
+
+/* More comfortable form cards */
+QFrame#transaction_card QLineEdit,
+QFrame#transaction_card QComboBox,
+QFrame#transaction_card QTextEdit,
+QFrame#transaction_card QPlainTextEdit,
+QFrame#transaction_card QSpinBox,
+QFrame#transaction_card QDoubleSpinBox {
+    min-height: 48px;
+}
+
+QFrame#transaction_card QTextEdit,
+QFrame#transaction_card QPlainTextEdit {
+    min-height: 112px;
+}

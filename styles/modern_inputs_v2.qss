@@ -1,0 +1,29 @@
+/* BLOOM FOOD — MODERN INPUT FIELDS | UI ONLY */
+QLineEdit, QComboBox, QTextEdit, QPlainTextEdit {
+    background-color: #FFFFFF;
+    color: #25332A;
+    border: 1px solid #D7E0D8;
+    border-radius: 10px;
+    padding: 10px 13px;
+    font-size: 10.5pt;
+    selection-background-color: #DDEEDC;
+    selection-color: #25332A;
+}
+QLineEdit:hover, QComboBox:hover, QTextEdit:hover, QPlainTextEdit:hover { border: 1px solid #B9CDBA; }
+QLineEdit:focus, QComboBox:focus, QTextEdit:focus, QPlainTextEdit:focus { border: 2px solid #4B9A4A; padding: 9px 12px; }
+QLineEdit:disabled, QComboBox:disabled, QTextEdit:disabled, QPlainTextEdit:disabled { background-color: #F3F5F3; color: #929B94; border: 1px solid #E1E6E2; }
+QLabel#form_label { color: #394A40; font-size: 10.5pt; font-weight: 600; background: transparent; padding: 0; margin: 0 0 5px 0; }
+QLineEdit, QComboBox { min-height: 44px; margin: 0 0 8px 0; }
+QTextEdit, QPlainTextEdit { min-height: 105px; margin: 0 0 8px 0; }
+QComboBox { padding: 9px 38px 9px 13px; }
+QComboBox:focus { padding: 8px 37px 8px 12px; }
+QComboBox QAbstractItemView { background-color: #FFFFFF; color: #25332A; border: 1px solid #D7E0D8; border-radius: 10px; padding: 5px; outline: none; selection-background-color: #E8F3E7; selection-color: #25442B; }
+QComboBox QAbstractItemView::item { min-height: 34px; padding: 7px 10px; border-radius: 7px; }
+QSpinBox, QDoubleSpinBox { background-color: #FFFFFF; color: #25332A; border: 1px solid #D7E0D8; border-radius: 10px; padding: 10px 38px 10px 13px; min-height: 44px; font-size: 10.5pt; }
+QSpinBox:hover, QDoubleSpinBox:hover { border: 1px solid #B9CDBA; }
+QSpinBox:focus, QDoubleSpinBox:focus { border: 2px solid #4B9A4A; padding: 9px 37px 9px 12px; }
+QSpinBox:disabled, QDoubleSpinBox:disabled { background-color: #F3F5F3; color: #929B94; border: 1px solid #E1E6E2; }
+QLineEdit#product_search { border-radius: 26px; padding: 11px 20px; min-height: 46px; font-size: 12pt; }
+QLineEdit#product_search:focus { padding: 10px 19px; }
+QLineEdit#top_product_search { border-radius: 22px; padding: 10px 17px; min-height: 42px; }
+QLineEdit#top_product_search:focus { padding: 9px 16px; }

@@ -93,30 +93,35 @@ QLabel#form_label {
 }
 
 /* ---------------------------------------------------------
-   COMBOBOX — reference layout: arrow on the LEFT for RTL
+   COMBOBOX — simple clean chevron on the RIGHT
    --------------------------------------------------------- */
 QComboBox {
-    padding-left: 38px;
-    padding-right: 11px;
+    padding-left: 11px;
+    padding-right: 38px;
 }
 
 QComboBox:focus {
-    padding-left: 37px;
-    padding-right: 10px;
+    padding-left: 10px;
+    padding-right: 37px;
 }
 
 QComboBox::drop-down {
     subcontrol-origin: padding;
-    subcontrol-position: top left;
+    subcontrol-position: top right;
     width: 30px;
     border: none;
     background: transparent;
 }
 
 QComboBox::down-arrow {
-    image: url(icons/input_chevron_down.svg);
-    width: 18px;
-    height: 18px;
+    image: url(icons/dropdown_chevron.svg);
+    width: 14px;
+    height: 8px;
+}
+
+QComboBox::drop-down:hover {
+    background: #F4F7FB;
+    border-radius: 0 7px 7px 0;
 }
 
 QComboBox:on {
@@ -149,96 +154,10 @@ QComboBox QAbstractItemView::item:selected {
     color: #1D4ED8;
 }
 
-/* ---------------------------------------------------------
-   INPUT ICONS — same visual language as the reference sheet
-   These use SVG assets from /icons and remain UI-only.
-   --------------------------------------------------------- */
-QLineEdit#product_search,
-QLineEdit#top_product_search {
-    min-height: 38px;
-    border-radius: 7px;
-    padding: 7px 38px 7px 12px;
-    background-color: #FFFFFF;
-    border: 1px solid #D7DEE8;
-    background-image: url(icons/input_search.svg);
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-
-QLineEdit#product_search:focus,
-QLineEdit#top_product_search:focus {
-    border: 2px solid #2563EB;
-    padding: 6px 37px 6px 11px;
-}
-
-/* Optional semantic input object names used by form pages. */
-QLineEdit#customer_name_input,
-QLineEdit#client_name_input,
-QLineEdit#representative_input {
-    padding-right: 38px;
-    background-image: url(icons/input_user.svg);
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-
-QLineEdit#notes_search_input,
-QLineEdit#search_input {
-    padding-right: 38px;
-    background-image: url(icons/input_search.svg);
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-
-QLineEdit#product_name_input,
-QLineEdit#item_name_input {
-    padding-right: 38px;
-    background-image: url(icons/input_box.svg);
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-
-/* Numeric field — tag icon at the LEFT, as in the reference */
-QDoubleSpinBox#quantity_input,
-QSpinBox#quantity_input,
-QDoubleSpinBox#amount_input,
-QSpinBox#amount_input {
-    padding-left: 38px;
-    background-image: url(icons/input_tag.svg);
-    background-repeat: no-repeat;
-    background-position: left center;
-}
-
-/* Date field — calendar icon at the LEFT */
-QDateEdit {
-    padding-left: 38px;
-    padding-right: 11px;
-}
-
-QDateEdit::drop-down {
-    subcontrol-origin: padding;
-    subcontrol-position: top left;
-    width: 30px;
-    border: none;
-    background: transparent;
-}
-
-QDateEdit::down-arrow {
-    image: url(icons/input_calendar.svg);
-    width: 18px;
-    height: 18px;
-}
-
-/* Generic search fields without an object name */
-QLineEdit[placeholderText*="بحث"] {
-    padding-right: 38px;
-    background-image: url(icons/input_search.svg);
-    background-repeat: no-repeat;
-    background-position: right center;
-}
-
-/* Numeric fields — clean, compact, no oversized arrows */
+/* Numeric fields — clean, compact, no decorative icons */
 QSpinBox,
 QDoubleSpinBox {
+    padding-left: 11px;
     padding-right: 11px;
 }
 
@@ -249,6 +168,26 @@ QDoubleSpinBox::down-button {
     width: 0;
     border: none;
     background: transparent;
+}
+
+/* Date field — clean, without decorative icons */
+QDateEdit {
+    padding-left: 11px;
+    padding-right: 11px;
+}
+
+QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 30px;
+    border: none;
+    background: transparent;
+}
+
+QDateEdit::down-arrow {
+    image: url(icons/dropdown_chevron.svg);
+    width: 14px;
+    height: 8px;
 }
 
 /* Validation helpers */

@@ -21,11 +21,15 @@ class TransactionRepository:
     def _ensure_batch_column(self):
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
+        changed = False
         if sheet.max_column < 8:
             sheet.cell(1, 8).value = "Batch_Code"
+            changed = True
         elif sheet.cell(1, 8).value != "Batch_Code":
             sheet.cell(1, sheet.max_column + 1).value = "Batch_Code"
-        workbook.save(self.file)
+            changed = True
+        if changed:
+            workbook.save(self.file)
         workbook.close()
 
     def _transaction_batch(self, row):
@@ -46,9 +50,7 @@ class TransactionRepository:
         if batch_code:
             if not self.batch_repo.get_batch(product_id, batch_code):
                 raise ValueError("الباتش المختار غير موجود لهذا الصنف.")
-            if transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(
-                product, quantity, batch_code
-            ):
+            if transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(product, quantity, batch_code):
                 raise ValueError("الكمية المطلوبة أكبر من رصيد الباتش المتاح.")
         elif transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(product, quantity):
             raise ValueError("الكمية المطلوبة أكبر من رصيد الصنف المتاح.")
@@ -57,16 +59,7 @@ class TransactionRepository:
         sheet = workbook["Transactions"]
         transaction_id = f"TR{sheet.max_row:05d}"
         now = datetime.now()
-        sheet.append([
-            transaction_id,
-            now.strftime("%Y-%m-%d"),
-            now.strftime("%H:%M:%S"),
-            product,
-            transaction_type,
-            quantity,
-            notes,
-            batch_code or "",
-        ])
+        sheet.append([transaction_id, now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S"), product, transaction_type, quantity, notes, batch_code or ""])
         workbook.save(self.file)
         workbook.close()
 
@@ -113,9 +106,7 @@ class TransactionRepository:
 
         batches = self.batch_repo.get_batches(product_id)
         if batches:
-            # In Bloom, product opening balance and batch opening balances are
-            # both additive opening quantities. A batch is an additional stock
-            # opening entry, not a breakdown of the product opening balance.
+            # Bloom rule: product opening + batch openings are additive.
             product_opening = float(product_repo.get_opening_balance(product_id) or 0)
             total_opening = product_opening
             total_in = 0.0
@@ -193,11 +184,7 @@ class TransactionRepository:
         for row in sheet.iter_rows(min_row=2, values_only=True):
             if row[0] == transaction_id:
                 workbook.close()
-                return {
-                    "id": row[0], "date": row[1], "time": row[2],
-                    "product": row[3], "type": row[4], "quantity": row[5],
-                    "notes": row[6], "batch": row[7] if len(row) > 7 else "",
-                }
+                return {"id": row[0], "date": row[1], "time": row[2], "product": row[3], "type": row[4], "quantity": row[5], "notes": row[6], "batch": row[7] if len(row) > 7 else ""}
         workbook.close()
         return None
 

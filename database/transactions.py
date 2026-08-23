@@ -113,7 +113,11 @@ class TransactionRepository:
 
         batches = self.batch_repo.get_batches(product_id)
         if batches:
-            total_opening = 0.0
+            # In Bloom, product opening balance and batch opening balances are
+            # both additive opening quantities. A batch is an additional stock
+            # opening entry, not a breakdown of the product opening balance.
+            product_opening = float(product_repo.get_opening_balance(product_id) or 0)
+            total_opening = product_opening
             total_in = 0.0
             total_out = 0.0
 
@@ -146,10 +150,9 @@ class TransactionRepository:
         summary = []
         for _, row in products.iterrows():
             product_name = row["Product_Name"]
-            product_id = row["product_ID"]
-            opening_balance = product_repo.get_opening_balance(product_id)
-            total_in, total_out, balance = self.get_product_balance(product_name)
-            summary.append([product_name, opening_balance, total_in, total_out, balance])
+            total_opening, total_in, balance = self.get_product_balance(product_name)
+            total_out = total_opening + total_in - balance
+            summary.append([product_name, total_opening, total_in, total_out, balance])
         return summary
 
     def check_stock(self, product, requested_quantity, batch_code=None):

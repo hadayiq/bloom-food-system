@@ -130,6 +130,9 @@ class IssueRepository:
 
         workbook.save(self.file)
         workbook.close()
+        from utils.refresh_manager import refresh_manager
+        refresh_manager.data_changed.emit()
+        refresh_manager.subwarehouse_changed.emit()
         return issue_no
 
     def get_open_issues(self):
@@ -245,6 +248,9 @@ class IssueRepository:
 
         workbook.save(self.file)
         workbook.close()
+        from utils.refresh_manager import refresh_manager
+        refresh_manager.data_changed.emit()
+        refresh_manager.subwarehouse_changed.emit()
         return issue_no
 
     def get_count(self, issue_no):
@@ -364,4 +370,7 @@ class IssueRepository:
 
         workbook.save(self.file)
         workbook.close()
+        from utils.refresh_manager import refresh_manager
+        refresh_manager.data_changed.emit()
+        refresh_manager.subwarehouse_changed.emit()
         return {"issued": total_issued, "counted": total_counted, "sold": total_sold}

@@ -99,41 +99,59 @@ class TransactionRepository:
         return self._calculate(transactions, opening)
 
     def get_product_balance(self, product):
+        """
+        Return (opening, incoming, current_balance).
+
+        Bloom inventory rule:
+        - The product opening balance is the product-level opening.
+        - Each batch opening balance is an additional opening quantity.
+        - Batch transactions are counted only once.
+        - Legacy transactions without a Batch_Code are counted at product level.
+        """
         product_repo = ProductRepository()
         product_id = product_repo.get_product_id(product)
         if product_id is None:
             return 0.0, 0.0, 0.0
 
         batches = self.batch_repo.get_batches(product_id)
-        if batches:
-            # Bloom rule: product opening + batch openings are additive.
-            product_opening = float(product_repo.get_opening_balance(product_id) or 0)
-            total_opening = product_opening
-            total_in = 0.0
-            total_out = 0.0
+        if not batches:
+            opening_balance = float(product_repo.get_opening_balance(product_id) or 0)
+            transactions = self.get_transactions_by_product(product)
+            total_in, total_out, balance = self._calculate(transactions, opening_balance)
+            # Never expose a negative stock balance from the summary.
+            return opening_balance, total_in, max(0.0, balance)
 
-            for batch in batches:
-                batch_in, batch_out, _ = self.get_batch_balance(product, batch["code"])
-                total_opening += float(batch["opening_balance"] or 0)
-                total_in += batch_in
-                total_out += batch_out
+        # Batch opening quantities are additive to the product opening quantity
+        # in this project by design.
+        total_opening = float(product_repo.get_opening_balance(product_id) or 0)
+        total_in = 0.0
+        total_out = 0.0
 
-            legacy_transactions = self.get_transactions_by_product(product)
-            for row in legacy_transactions:
-                if len(row) >= 8 and row[7]:
-                    continue
-                transaction_type = row[4]
-                quantity = float(row[5] or 0)
-                if transaction_type in self.TRANSACTION_IN_TYPES:
-                    total_in += quantity
-                elif transaction_type in self.TRANSACTION_OUT_TYPES:
-                    total_out += quantity
+        for batch in batches:
+            batch_in, batch_out, _ = self.get_batch_balance(product, batch["code"])
+            total_opening += max(0.0, float(batch["opening_balance"] or 0))
+            total_in += max(0.0, float(batch_in or 0))
+            total_out += max(0.0, float(batch_out or 0))
 
-            return total_opening, total_in, total_opening + total_in - total_out
+        # Older transactions may not have a Batch_Code. Count those at product
+        # level, while batch-tagged transactions have already been counted above.
+        legacy_transactions = self.get_transactions_by_product(product)
+        for row in legacy_transactions:
+            batch_code = row[7] if len(row) > 7 else None
+            if batch_code:
+                continue
+            transaction_type = row[4]
+            quantity = max(0.0, float(row[5] or 0))
+            if transaction_type in self.TRANSACTION_IN_TYPES:
+                total_in += quantity
+            elif transaction_type in self.TRANSACTION_OUT_TYPES:
+                total_out += quantity
 
-        opening_balance = product_repo.get_opening_balance(product_id)
-        transactions = self.get_transactions_by_product(product)
-        return self._calculate(transactions, opening_balance)
+        # Calculate the balance from the same totals shown in the summary.
+        # This prevents a batch opening from being mistaken for negative
+        # outgoing stock.
+        balance = total_opening + total_in - total_out
+        return total_opening, total_in, max(0.0, balance)
 
     def get_inventory_summary(self):
         product_repo = ProductRepository()
@@ -142,8 +160,17 @@ class TransactionRepository:
         for _, row in products.iterrows():
             product_name = row["Product_Name"]
             total_opening, total_in, balance = self.get_product_balance(product_name)
-            total_out = total_opening + total_in - balance
-            summary.append([product_name, total_opening, total_in, total_out, balance])
+
+            # Outgoing is a real movement total derived from the same opening,
+            # incoming and current balance values. Never display it as negative.
+            total_out = max(0.0, total_opening + total_in - balance)
+            summary.append([
+                product_name,
+                total_opening,
+                total_in,
+                total_out,
+                balance,
+            ])
         return summary
 
     def check_stock(self, product, requested_quantity, batch_code=None):

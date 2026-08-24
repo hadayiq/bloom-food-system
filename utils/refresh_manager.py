@@ -10,6 +10,9 @@ class RefreshManager(QObject):
     # خاص بالأصناف
     products_changed = Signal()
 
+    # خاص بالمخازن الفرعية / مناديب السيارات
+    subwarehouse_changed = Signal()
+
     def __init__(self):
         super().__init__()
         self._inventory_file = os.path.join(

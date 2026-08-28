@@ -31,7 +31,9 @@ class BatchRepository:
             workbook.save(self.file)
         else:
             sheet = workbook[self.SHEET_NAME]
-            if sheet.max_row == 1 and all(sheet.cell(1, i + 1).value is None for i in range(len(self.HEADERS))):
+            if sheet.max_row == 1 and all(
+                sheet.cell(1, i + 1).value is None for i in range(len(self.HEADERS))
+            ):
                 for i, header in enumerate(self.HEADERS, start=1):
                     sheet.cell(1, i).value = header
                 workbook.save(self.file)
@@ -73,8 +75,9 @@ class BatchRepository:
         return result
 
     def get_batch(self, product_id, batch_code):
+        wanted = str(batch_code).strip().casefold()
         for batch in self.get_batches(product_id):
-            if str(batch["code"]).strip().lower() == str(batch_code).strip().lower():
+            if str(batch["code"]).strip().casefold() == wanted:
                 return batch
         return None
 
@@ -89,34 +92,72 @@ class BatchRepository:
         expiry_date,
         opening_balance,
     ):
+        """Add a new batch with zero opening balance and one incoming movement.
+
+        The supplied quantity represents the quantity received for the new
+        batch. It is deliberately stored as an incoming transaction instead
+        of Batches.Opening_Balance so it cannot be counted twice at product
+        level.
+        """
         batch_code = str(batch_code).strip()
+        quantity = float(opening_balance)
         if not batch_code:
             raise ValueError("كود الباتش مطلوب.")
-        if opening_balance < 0:
-            raise ValueError("الرصيد الافتتاحي لا يمكن أن يكون سالبًا.")
+        if quantity <= 0:
+            raise ValueError("كمية الباتش يجب أن تكون أكبر من صفر.")
         if expiry_date < production_date:
             raise ValueError("تاريخ الصلاحية لا يمكن أن يكون قبل تاريخ الإنتاج.")
         if self.batch_exists(product_id, batch_code):
             raise ValueError("كود الباتش موجود بالفعل لهذا الصنف.")
 
         workbook = load_workbook(self.file)
-        sheet = workbook[self.SHEET_NAME]
-        batch_id = self._next_batch_id(sheet)
+        batches_sheet = workbook[self.SHEET_NAME]
 
-        sheet.append(
+        products_sheet = workbook["Products"]
+        product_name = None
+        for row in products_sheet.iter_rows(min_row=2, values_only=True):
+            if row[0] == product_id:
+                product_name = str(row[1]).strip()
+                break
+        if product_name is None:
+            workbook.close()
+            raise ValueError("الصنف غير موجود.")
+
+        transactions_sheet = workbook["Transactions"]
+        if transactions_sheet.max_column < 8:
+            transactions_sheet.cell(1, 8).value = "Batch_Code"
+        elif transactions_sheet.cell(1, 8).value != "Batch_Code":
+            transactions_sheet.cell(1, transactions_sheet.max_column + 1).value = "Batch_Code"
+
+        batch_id = self._next_batch_id(batches_sheet)
+        batches_sheet.append(
             [
                 batch_id,
                 product_id,
                 batch_code,
                 production_date.strftime("%Y-%m-%d"),
                 expiry_date.strftime("%Y-%m-%d"),
-                float(opening_balance),
+                0.0,
+            ]
+        )
+
+        now = datetime.now()
+        transaction_id = f"TR{transactions_sheet.max_row:05d}"
+        transactions_sheet.append(
+            [
+                transaction_id,
+                now.strftime("%Y-%m-%d"),
+                now.strftime("%H:%M:%S"),
+                product_name,
+                "مشتريات",
+                quantity,
+                f"وارد باتش جديد: {batch_code}",
+                batch_code,
             ]
         )
 
         workbook.save(self.file)
         workbook.close()
-
         return batch_id
 
     def get_opening_balance(self, product_id, batch_code):

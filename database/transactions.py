@@ -44,9 +44,6 @@ class TransactionRepository:
                 return str(row["Product_Name"]).strip()
         return None
 
-    def _transaction_batch(self, row):
-        return row[7] if len(row) > 7 else None
-
     @staticmethod
     def _ensure_batch_column_for_write(sheet):
         if sheet.max_column < 8:
@@ -56,9 +53,7 @@ class TransactionRepository:
 
     def save_transaction(self, product, transaction_type, quantity, notes, batch_code=None):
         quantity = float(quantity)
-        if quantity < 0:
-            raise ValueError("الكمية لا يمكن أن تكون سالبة.")
-        if quantity == 0:
+        if quantity <= 0:
             raise ValueError("الكمية يجب أن تكون أكبر من صفر.")
         if transaction_type not in self.TRANSACTION_IN_TYPES + self.TRANSACTION_OUT_TYPES:
             raise ValueError("نوع الحركة غير صالح.")
@@ -140,12 +135,7 @@ class TransactionRepository:
         return self._calculate(transactions, opening)
 
     def get_product_balance(self, product):
-        """Return (opening, incoming, current_balance) for the product.
-
-        Product opening balance is the only opening amount included in the
-        product total. Batch opening balances are used only for their own
-        batch balances and are never added to the product opening.
-        """
+        """Return (opening, incoming, current_balance) for the product."""
         product_repo = ProductRepository()
         product_id = product_repo.get_product_id(product)
         if product_id is None:
@@ -164,13 +154,7 @@ class TransactionRepository:
             product_name = row["Product_Name"]
             total_opening, total_in, balance = self.get_product_balance(product_name)
             total_out = total_opening + total_in - balance
-            summary.append([
-                product_name,
-                total_opening,
-                total_in,
-                total_out,
-                balance,
-            ])
+            summary.append([product_name, total_opening, total_in, total_out, balance])
         return summary
 
     def check_stock(self, product, requested_quantity, batch_code=None):
@@ -238,12 +222,10 @@ class TransactionRepository:
         refresh_manager.data_changed.emit()
 
     def _validate_updated_balances(self, existing, replacement, product_repo):
-        """Reject an edit if replacing the old row would make stock negative."""
         affected_products = {
             self._normalize_product_name(existing.get("product")),
             self._normalize_product_name(replacement.get("product")),
         }
-
         for normalized_product in affected_products:
             if not normalized_product:
                 continue
@@ -264,16 +246,9 @@ class TransactionRepository:
                 raise ValueError(f"تعديل الحركة سيجعل رصيد الصنف سالبًا: {product_name}.")
 
         affected_batches = {
-            (
-                self._normalize_product_name(existing.get("product")),
-                str(existing.get("batch") or "").strip().casefold(),
-            ),
-            (
-                self._normalize_product_name(replacement.get("product")),
-                str(replacement.get("batch") or "").strip().casefold(),
-            ),
+            (self._normalize_product_name(existing.get("product")), str(existing.get("batch") or "").strip().casefold()),
+            (self._normalize_product_name(replacement.get("product")), str(replacement.get("batch") or "").strip().casefold()),
         }
-
         for normalized_product, normalized_batch in affected_batches:
             if not normalized_product or not normalized_batch:
                 continue
@@ -289,10 +264,7 @@ class TransactionRepository:
             rows = self.get_transactions_by_product(product_name, batch_code)
             kept_rows = [row for row in rows if row[0] != existing["id"]]
             _in, _out, balance = self._calculate(kept_rows, opening)
-            if (
-                self._normalize_product_name(replacement["product"]) == normalized_product
-                and str(replacement.get("batch") or "").strip().casefold() == normalized_batch
-            ):
+            if self._normalize_product_name(replacement["product"]) == normalized_product and str(replacement.get("batch") or "").strip().casefold() == normalized_batch:
                 if replacement["type"] in self.TRANSACTION_IN_TYPES:
                     balance += replacement["quantity"]
                 elif replacement["type"] in self.TRANSACTION_OUT_TYPES:
@@ -300,26 +272,54 @@ class TransactionRepository:
             if balance < 0:
                 raise ValueError(f"تعديل الحركة سيجعل رصيد الباتش سالبًا: {batch_code}.")
 
+    def _validate_delete_balance(self, existing, product_repo):
+        product_name = existing.get("product")
+        normalized_product = self._normalize_product_name(product_name)
+        if normalized_product:
+            product_id = product_repo.get_product_id(normalized_product)
+            if product_id is not None:
+                canonical_product = self._canonical_product_name(product_repo, product_id)
+                opening = float(product_repo.get_opening_balance(product_id) or 0)
+                rows = self.get_transactions_by_product(canonical_product)
+                kept_rows = [row for row in rows if row[0] != existing["id"]]
+                _in, _out, balance = self._calculate(kept_rows, opening)
+                if balance < 0:
+                    raise ValueError(f"حذف الحركة سيجعل رصيد الصنف سالبًا: {canonical_product}.")
+
+        batch_code = str(existing.get("batch") or "").strip()
+        if not batch_code or not normalized_product:
+            return
+        product_id = product_repo.get_product_id(normalized_product)
+        if product_id is None:
+            return
+        canonical_product = self._canonical_product_name(product_repo, product_id)
+        batch = self.batch_repo.get_batch(product_id, batch_code)
+        if batch is None:
+            raise ValueError("الباتش المرتبط بالحركة غير موجود لهذا الصنف.")
+        canonical_batch = batch["code"]
+        opening = self.batch_repo.get_opening_balance(product_id, canonical_batch)
+        rows = self.get_transactions_by_product(canonical_product, canonical_batch)
+        kept_rows = [row for row in rows if row[0] != existing["id"]]
+        _in, _out, balance = self._calculate(kept_rows, opening)
+        if balance < 0:
+            raise ValueError(f"حذف الحركة سيجعل رصيد الباتش سالبًا: {canonical_batch}.")
+
     def get_transaction_by_id(self, transaction_id):
         workbook = load_workbook(self.file, data_only=True)
         sheet = workbook["Transactions"]
         for row in sheet.iter_rows(min_row=2, values_only=True):
             if row[0] == transaction_id:
                 workbook.close()
-                return {
-                    "id": row[0],
-                    "date": row[1],
-                    "time": row[2],
-                    "product": row[3],
-                    "type": row[4],
-                    "quantity": row[5],
-                    "notes": row[6],
-                    "batch": row[7] if len(row) > 7 else "",
-                }
+                return {"id": row[0], "date": row[1], "time": row[2], "product": row[3], "type": row[4], "quantity": row[5], "notes": row[6], "batch": row[7] if len(row) > 7 else ""}
         workbook.close()
         return None
 
     def delete_transaction(self, transaction_id):
+        product_repo = ProductRepository()
+        existing = self.get_transaction_by_id(transaction_id)
+        if existing is None:
+            raise ValueError("الحركة المطلوب حذفها غير موجودة.")
+        self._validate_delete_balance(existing, product_repo)
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
         for row in range(2, sheet.max_row + 1):

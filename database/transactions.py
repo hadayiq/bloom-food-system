@@ -300,6 +300,39 @@ class TransactionRepository:
             if balance < 0:
                 raise ValueError(f"تعديل الحركة سيجعل رصيد الباتش سالبًا: {batch_code}.")
 
+    def _validate_delete_balance(self, existing, product_repo):
+        """Reject deleting an incoming movement when it would make stock negative."""
+        product_name = existing.get("product")
+        normalized_product = self._normalize_product_name(product_name)
+        if normalized_product:
+            product_id = product_repo.get_product_id(normalized_product)
+            if product_id is not None:
+                canonical_product = self._canonical_product_name(product_repo, product_id)
+                opening = float(product_repo.get_opening_balance(product_id) or 0)
+                rows = self.get_transactions_by_product(canonical_product)
+                kept_rows = [row for row in rows if row[0] != existing["id"]]
+                _in, _out, balance = self._calculate(kept_rows, opening)
+                if balance < 0:
+                    raise ValueError(f"حذف الحركة سيجعل رصيد الصنف سالبًا: {canonical_product}.")
+
+        batch_code = str(existing.get("batch") or "").strip()
+        if not batch_code or not normalized_product:
+            return
+        product_id = product_repo.get_product_id(normalized_product)
+        if product_id is None:
+            return
+        canonical_product = self._canonical_product_name(product_repo, product_id)
+        batch = self.batch_repo.get_batch(product_id, batch_code)
+        if batch is None:
+            raise ValueError("الباتش المرتبط بالحركة غير موجود لهذا الصنف.")
+        canonical_batch = batch["code"]
+        opening = self.batch_repo.get_opening_balance(product_id, canonical_batch)
+        rows = self.get_transactions_by_product(canonical_product, canonical_batch)
+        kept_rows = [row for row in rows if row[0] != existing["id"]]
+        _in, _out, balance = self._calculate(kept_rows, opening)
+        if balance < 0:
+            raise ValueError(f"حذف الحركة سيجعل رصيد الباتش سالبًا: {canonical_batch}.")
+
     def get_transaction_by_id(self, transaction_id):
         workbook = load_workbook(self.file, data_only=True)
         sheet = workbook["Transactions"]
@@ -320,6 +353,12 @@ class TransactionRepository:
         return None
 
     def delete_transaction(self, transaction_id):
+        product_repo = ProductRepository()
+        existing = self.get_transaction_by_id(transaction_id)
+        if existing is None:
+            raise ValueError("الحركة المطلوب حذفها غير موجودة.")
+        self._validate_delete_balance(existing, product_repo)
+
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
         for row in range(2, sheet.max_row + 1):

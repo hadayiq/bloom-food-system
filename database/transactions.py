@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime
+
 from openpyxl import load_workbook
 
 from database.products import ProductRepository
@@ -250,7 +251,7 @@ class TransactionRepository:
             rows = self.get_transactions_by_product(product_name)
             kept_rows = [row for row in rows if row[0] != existing["id"]]
             _in, _out, balance = self._calculate(kept_rows, opening)
-            if replacement["product"] == product_name:
+            if self._normalize_product_name(replacement["product"]) == normalized_product:
                 if replacement["type"] in self.TRANSACTION_IN_TYPES:
                     balance += replacement["quantity"]
                 elif replacement["type"] in self.TRANSACTION_OUT_TYPES:
@@ -285,7 +286,7 @@ class TransactionRepository:
             kept_rows = [row for row in rows if row[0] != existing["id"]]
             _in, _out, balance = self._calculate(kept_rows, opening)
             if (
-                replacement["product"] == product_name
+                self._normalize_product_name(replacement["product"]) == normalized_product
                 and str(replacement.get("batch") or "").strip().casefold() == normalized_batch
             ):
                 if replacement["type"] in self.TRANSACTION_IN_TYPES:

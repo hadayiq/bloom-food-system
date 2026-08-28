@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from openpyxl import load_workbook
 
@@ -32,6 +33,19 @@ class TransactionRepository:
             workbook.save(self.file)
         workbook.close()
 
+    @staticmethod
+    def _normalize_product_name(value):
+        if value is None:
+            return ""
+        return re.sub(r"\s+", " ", str(value).strip()).casefold()
+
+    def _canonical_product_name(self, product_repo, product_id):
+        products = product_repo.get_all_products()
+        for _, row in products.iterrows():
+            if row["product_ID"] == product_id:
+                return str(row["Product_Name"]).strip()
+        return None
+
     def _transaction_batch(self, row):
         return row[7] if len(row) > 7 else None
 
@@ -41,37 +55,58 @@ class TransactionRepository:
             raise ValueError("الكمية لا يمكن أن تكون سالبة.")
         if quantity == 0:
             raise ValueError("الكمية يجب أن تكون أكبر من صفر.")
+        if transaction_type not in self.TRANSACTION_IN_TYPES + self.TRANSACTION_OUT_TYPES:
+            raise ValueError("نوع الحركة غير صالح.")
 
         product_repo = ProductRepository()
         product_id = product_repo.get_product_id(product)
         if product_id is None:
             raise ValueError("الصنف غير موجود.")
+        canonical_product = self._canonical_product_name(product_repo, product_id)
 
         if batch_code:
-            if not self.batch_repo.get_batch(product_id, batch_code):
+            batch = self.batch_repo.get_batch(product_id, batch_code)
+            if not batch:
                 raise ValueError("الباتش المختار غير موجود لهذا الصنف.")
-            if transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(product, quantity, batch_code):
-                raise ValueError("الكمية المطلوبة أكبر من رصيد الباتش المتاح.")
-        elif transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(product, quantity):
+            batch_code = batch["code"]
+            if transaction_type in self.TRANSACTION_OUT_TYPES:
+                if not self.check_stock(canonical_product, quantity, batch_code):
+                    raise ValueError("الكمية المطلوبة أكبر من رصيد الباتش المتاح.")
+                if not self.check_stock(canonical_product, quantity):
+                    raise ValueError("الكمية المطلوبة أكبر من رصيد الصنف المتاح.")
+        elif transaction_type in self.TRANSACTION_OUT_TYPES and not self.check_stock(canonical_product, quantity):
             raise ValueError("الكمية المطلوبة أكبر من رصيد الصنف المتاح.")
 
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
         transaction_id = f"TR{sheet.max_row:05d}"
         now = datetime.now()
-        sheet.append([transaction_id, now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S"), product, transaction_type, quantity, notes, batch_code or ""])
+        sheet.append([
+            transaction_id,
+            now.strftime("%Y-%m-%d"),
+            now.strftime("%H:%M:%S"),
+            canonical_product,
+            transaction_type,
+            quantity,
+            notes,
+            batch_code or "",
+        ])
         workbook.save(self.file)
         workbook.close()
 
     def get_transactions_by_product(self, product, batch_code=None):
+        wanted_product = self._normalize_product_name(product)
+        wanted_batch = str(batch_code).strip().casefold() if batch_code is not None else None
         workbook = load_workbook(self.file, data_only=True)
         sheet = workbook["Transactions"]
         transactions = []
         for row in sheet.iter_rows(min_row=2, values_only=True):
-            if row[3] != product:
+            if self._normalize_product_name(row[3]) != wanted_product:
                 continue
-            if batch_code is not None and (len(row) < 8 or row[7] != batch_code):
-                continue
+            if wanted_batch is not None:
+                row_batch = row[7] if len(row) > 7 else None
+                if str(row_batch or "").strip().casefold() != wanted_batch:
+                    continue
             transactions.append(row)
         workbook.close()
         return transactions
@@ -99,59 +134,21 @@ class TransactionRepository:
         return self._calculate(transactions, opening)
 
     def get_product_balance(self, product):
-        """
-        Return (opening, incoming, current_balance).
+        """Return (opening, incoming, current_balance) for the product.
 
-        Bloom inventory rule:
-        - The product opening balance is the product-level opening.
-        - Each batch opening balance is an additional opening quantity.
-        - Batch transactions are counted only once.
-        - Legacy transactions without a Batch_Code are counted at product level.
+        Product opening balance is the only opening amount included in the
+        product total. Batch opening balances are used only for their own
+        batch balances and are never added to the product opening.
         """
         product_repo = ProductRepository()
         product_id = product_repo.get_product_id(product)
         if product_id is None:
             return 0.0, 0.0, 0.0
 
-        batches = self.batch_repo.get_batches(product_id)
-        if not batches:
-            opening_balance = float(product_repo.get_opening_balance(product_id) or 0)
-            transactions = self.get_transactions_by_product(product)
-            total_in, total_out, balance = self._calculate(transactions, opening_balance)
-            # Never expose a negative stock balance from the summary.
-            return opening_balance, total_in, max(0.0, balance)
-
-        # Batch opening quantities are additive to the product opening quantity
-        # in this project by design.
-        total_opening = float(product_repo.get_opening_balance(product_id) or 0)
-        total_in = 0.0
-        total_out = 0.0
-
-        for batch in batches:
-            batch_in, batch_out, _ = self.get_batch_balance(product, batch["code"])
-            total_opening += max(0.0, float(batch["opening_balance"] or 0))
-            total_in += max(0.0, float(batch_in or 0))
-            total_out += max(0.0, float(batch_out or 0))
-
-        # Older transactions may not have a Batch_Code. Count those at product
-        # level, while batch-tagged transactions have already been counted above.
-        legacy_transactions = self.get_transactions_by_product(product)
-        for row in legacy_transactions:
-            batch_code = row[7] if len(row) > 7 else None
-            if batch_code:
-                continue
-            transaction_type = row[4]
-            quantity = max(0.0, float(row[5] or 0))
-            if transaction_type in self.TRANSACTION_IN_TYPES:
-                total_in += quantity
-            elif transaction_type in self.TRANSACTION_OUT_TYPES:
-                total_out += quantity
-
-        # Calculate the balance from the same totals shown in the summary.
-        # This prevents a batch opening from being mistaken for negative
-        # outgoing stock.
-        balance = total_opening + total_in - total_out
-        return total_opening, total_in, max(0.0, balance)
+        opening_balance = float(product_repo.get_opening_balance(product_id) or 0)
+        transactions = self.get_transactions_by_product(product)
+        total_in, _total_out, balance = self._calculate(transactions, opening_balance)
+        return opening_balance, total_in, balance
 
     def get_inventory_summary(self):
         product_repo = ProductRepository()
@@ -160,10 +157,7 @@ class TransactionRepository:
         for _, row in products.iterrows():
             product_name = row["Product_Name"]
             total_opening, total_in, balance = self.get_product_balance(product_name)
-
-            # Outgoing is a real movement total derived from the same opening,
-            # incoming and current balance values. Never display it as negative.
-            total_out = max(0.0, total_opening + total_in - balance)
+            total_out = total_opening + total_in - balance
             summary.append([
                 product_name,
                 total_opening,
@@ -185,25 +179,121 @@ class TransactionRepository:
 
     def update_transaction(self, transaction_id, product, transaction_type, quantity, notes, batch_code=None):
         quantity = float(quantity)
-        if quantity < 0 or quantity == 0:
+        if quantity <= 0:
             raise ValueError("الكمية يجب أن تكون أكبر من صفر.")
+        if transaction_type not in self.TRANSACTION_IN_TYPES + self.TRANSACTION_OUT_TYPES:
+            raise ValueError("نوع الحركة غير صالح.")
+
+        product_repo = ProductRepository()
+        product_id = product_repo.get_product_id(product)
+        if product_id is None:
+            raise ValueError("الصنف غير موجود.")
+        canonical_product = self._canonical_product_name(product_repo, product_id)
+
+        existing = self.get_transaction_by_id(transaction_id)
+        if existing is None:
+            raise ValueError("الحركة المطلوب تعديلها غير موجودة.")
+
+        canonical_batch = ""
+        if batch_code:
+            batch = self.batch_repo.get_batch(product_id, batch_code)
+            if not batch:
+                raise ValueError("الباتش المختار غير موجود لهذا الصنف.")
+            canonical_batch = batch["code"]
+
+        replacement = {
+            "id": transaction_id,
+            "product": canonical_product,
+            "type": transaction_type,
+            "quantity": quantity,
+            "batch": canonical_batch,
+        }
+        self._validate_updated_balances(existing, replacement, product_repo)
 
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
+        found = False
         for row in sheet.iter_rows(min_row=2):
             if row[0].value == transaction_id:
-                row[3].value = product
+                row[3].value = canonical_product
                 row[4].value = transaction_type
                 row[5].value = quantity
                 row[6].value = notes
                 if sheet.max_column < 8:
                     sheet.cell(1, 8).value = "Batch_Code"
-                sheet.cell(row=row[0].row, column=8).value = batch_code or ""
+                sheet.cell(row=row[0].row, column=8).value = canonical_batch
+                found = True
                 break
+        if not found:
+            workbook.close()
+            raise ValueError("الحركة المطلوب تعديلها غير موجودة.")
         workbook.save(self.file)
         workbook.close()
         from utils.refresh_manager import refresh_manager
         refresh_manager.data_changed.emit()
+
+    def _validate_updated_balances(self, existing, replacement, product_repo):
+        """Reject an edit if replacing the old row would make stock negative."""
+        affected_products = {
+            self._normalize_product_name(existing.get("product")),
+            self._normalize_product_name(replacement.get("product")),
+        }
+
+        for normalized_product in affected_products:
+            if not normalized_product:
+                continue
+            product_id = product_repo.get_product_id(normalized_product)
+            if product_id is None:
+                continue
+            product_name = self._canonical_product_name(product_repo, product_id)
+            opening = float(product_repo.get_opening_balance(product_id) or 0)
+            rows = self.get_transactions_by_product(product_name)
+            kept_rows = [row for row in rows if row[0] != existing["id"]]
+            _in, _out, balance = self._calculate(kept_rows, opening)
+            if replacement["product"] == product_name:
+                if replacement["type"] in self.TRANSACTION_IN_TYPES:
+                    balance += replacement["quantity"]
+                elif replacement["type"] in self.TRANSACTION_OUT_TYPES:
+                    balance -= replacement["quantity"]
+            if balance < 0:
+                raise ValueError(f"تعديل الحركة سيجعل رصيد الصنف سالبًا: {product_name}.")
+
+        affected_batches = {
+            (
+                self._normalize_product_name(existing.get("product")),
+                str(existing.get("batch") or "").strip().casefold(),
+            ),
+            (
+                self._normalize_product_name(replacement.get("product")),
+                str(replacement.get("batch") or "").strip().casefold(),
+            ),
+        }
+
+        for normalized_product, normalized_batch in affected_batches:
+            if not normalized_product or not normalized_batch:
+                continue
+            product_id = product_repo.get_product_id(normalized_product)
+            if product_id is None:
+                continue
+            product_name = self._canonical_product_name(product_repo, product_id)
+            batch = self.batch_repo.get_batch(product_id, normalized_batch)
+            if not batch:
+                raise ValueError("الباتش المختار غير موجود لهذا الصنف.")
+            batch_code = batch["code"]
+            opening = self.batch_repo.get_opening_balance(product_id, batch_code)
+            rows = self.get_transactions_by_product(product_name, batch_code)
+            kept_rows = [row for row in rows if row[0] != existing["id"]]
+            _in, _out, balance = self._calculate(kept_rows, opening)
+            if (
+                replacement["product"] == product_name
+                and str(replacement.get("batch") or "").strip().casefold() == normalized_batch
+            ):
+                if replacement["type"] in self.TRANSACTION_IN_TYPES:
+                    balance += replacement["quantity"]
+                elif replacement["type"] in self.TRANSACTION_OUT_TYPES:
+                    balance -= replacement["quantity"]
+            if balance < 0:
+                raise ValueError(f"تعديل الحركة سيجعل رصيد الباتش سالبًا: {batch_code}.")
 
     def get_transaction_by_id(self, transaction_id):
         workbook = load_workbook(self.file, data_only=True)
@@ -211,7 +301,16 @@ class TransactionRepository:
         for row in sheet.iter_rows(min_row=2, values_only=True):
             if row[0] == transaction_id:
                 workbook.close()
-                return {"id": row[0], "date": row[1], "time": row[2], "product": row[3], "type": row[4], "quantity": row[5], "notes": row[6], "batch": row[7] if len(row) > 7 else ""}
+                return {
+                    "id": row[0],
+                    "date": row[1],
+                    "time": row[2],
+                    "product": row[3],
+                    "type": row[4],
+                    "quantity": row[5],
+                    "notes": row[6],
+                    "batch": row[7] if len(row) > 7 else "",
+                }
         workbook.close()
         return None
 
@@ -228,10 +327,11 @@ class TransactionRepository:
         refresh_manager.data_changed.emit()
 
     def product_has_transactions(self, product_name):
+        wanted_product = self._normalize_product_name(product_name)
         workbook = load_workbook(self.file, data_only=True)
         sheet = workbook["Transactions"]
         for row in sheet.iter_rows(min_row=2, values_only=True):
-            if row[3] == product_name:
+            if self._normalize_product_name(row[3]) == wanted_product:
                 workbook.close()
                 return True
         workbook.close()

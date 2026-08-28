@@ -21,18 +21,15 @@ class TransactionRepository:
         self._ensure_batch_column()
 
     def _ensure_batch_column(self):
-        workbook = load_workbook(self.file)
+        """Check the transaction schema without writing to Excel at startup."""
+        workbook = load_workbook(self.file, read_only=True, data_only=True)
         sheet = workbook["Transactions"]
-        changed = False
-        if sheet.max_column < 8:
-            sheet.cell(1, 8).value = "Batch_Code"
-            changed = True
-        elif sheet.cell(1, 8).value != "Batch_Code":
-            sheet.cell(1, sheet.max_column + 1).value = "Batch_Code"
-            changed = True
-        if changed:
-            workbook.save(self.file)
+        valid = (
+            sheet.max_column >= 8
+            and str(sheet.cell(1, 8).value or "").strip() == "Batch_Code"
+        )
         workbook.close()
+        return valid
 
     @staticmethod
     def _normalize_product_name(value):
@@ -49,6 +46,13 @@ class TransactionRepository:
 
     def _transaction_batch(self, row):
         return row[7] if len(row) > 7 else None
+
+    @staticmethod
+    def _ensure_batch_column_for_write(sheet):
+        if sheet.max_column < 8:
+            sheet.cell(1, 8).value = "Batch_Code"
+        elif str(sheet.cell(1, 8).value or "").strip() != "Batch_Code":
+            sheet.cell(1, sheet.max_column + 1).value = "Batch_Code"
 
     def save_transaction(self, product, transaction_type, quantity, notes, batch_code=None):
         quantity = float(quantity)
@@ -80,6 +84,7 @@ class TransactionRepository:
 
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
+        self._ensure_batch_column_for_write(sheet)
         transaction_id = f"TR{sheet.max_row:05d}"
         now = datetime.now()
         sheet.append([
@@ -170,7 +175,7 @@ class TransactionRepository:
 
     def check_stock(self, product, requested_quantity, batch_code=None):
         requested_quantity = float(requested_quantity)
-        if requested_quantity < 0:
+        if requested_quantity <= 0:
             return False
         if batch_code:
             _, _, balance = self.get_batch_balance(product, batch_code)
@@ -213,6 +218,7 @@ class TransactionRepository:
 
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
+        self._ensure_batch_column_for_write(sheet)
         found = False
         for row in sheet.iter_rows(min_row=2):
             if row[0].value == transaction_id:
@@ -220,8 +226,6 @@ class TransactionRepository:
                 row[4].value = transaction_type
                 row[5].value = quantity
                 row[6].value = notes
-                if sheet.max_column < 8:
-                    sheet.cell(1, 8).value = "Batch_Code"
                 sheet.cell(row=row[0].row, column=8).value = canonical_batch
                 found = True
                 break

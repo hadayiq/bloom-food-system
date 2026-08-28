@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 from openpyxl import load_workbook
 from datetime import datetime
@@ -18,15 +19,19 @@ class ProductRepository:
         df = self.get_all_products()
         return df["Product_Name"].dropna().astype(str).str.strip().tolist()
 
+    @staticmethod
+    def _normalize_product_name(value):
+        if value is None:
+            return ""
+        return re.sub(r"\s+", " ", str(value).strip()).casefold()
+
     def get_product_id(self, product_name):
         """Resolve a product by normalized display name."""
-        if product_name is None:
-            return None
-        wanted = str(product_name).strip().casefold()
+        wanted = self._normalize_product_name(product_name)
         if not wanted:
             return None
         df = self.get_all_products()
-        names = df["Product_Name"].astype(str).str.strip().str.casefold()
+        names = df["Product_Name"].map(self._normalize_product_name)
         row = df[names == wanted]
         if row.empty:
             return None

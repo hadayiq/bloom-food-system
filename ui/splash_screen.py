@@ -1,24 +1,18 @@
-import base64
+import os
 
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QSplashScreen
 
 
-# Official Bloom Food logo supplied for the application splash screen.
-_LOGO_B64 = ""  # populated by the implementation commit
-
-
 class BloomSplashScreen(QSplashScreen):
     """Minimal branded splash screen shown before the main window."""
 
-    def __init__(self, logo_data: bytes):
+    def __init__(self, logo_path: str):
         super().__init__(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
 
-        logo = QPixmap()
-        logo.loadFromData(logo_data, "JPEG")
-
+        logo = QPixmap(logo_path)
         canvas = QPixmap(1250, 750)
         canvas.fill(Qt.GlobalColor.white)
 
@@ -38,8 +32,11 @@ class BloomSplashScreen(QSplashScreen):
         self.setPixmap(canvas)
 
 
-def show_splash(app, logo_data: bytes, on_finished, duration_ms: int = 900):
-    splash = BloomSplashScreen(logo_data)
+def show_splash(app, on_finished, duration_ms: int = 900):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    logo_path = os.path.join(base_dir, "icons", "bloom_logo_light.svg")
+
+    splash = BloomSplashScreen(logo_path)
     splash.show()
     app.processEvents()
 

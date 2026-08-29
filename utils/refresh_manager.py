@@ -20,11 +20,10 @@ class RefreshManager(QObject):
         )
         self._last_mtime = self._get_mtime()
 
-        # Excel is the source of truth for this project. Polling its modification
-        # time keeps open windows in sync even when a repository writes directly
-        # to the workbook (for example after a count/liquidation).
+        # Excel is the source of truth. Polling is kept for changes made by
+        # other code/windows, but repository writes can notify immediately.
         self._watch_timer = QTimer(self)
-        self._watch_timer.setInterval(350)
+        self._watch_timer.setInterval(500)
         self._watch_timer.timeout.connect(self._check_inventory_file)
         self._watch_timer.start()
 
@@ -33,6 +32,11 @@ class RefreshManager(QObject):
             return os.path.getmtime(self._inventory_file)
         except OSError:
             return None
+
+    def notify_data_changed(self):
+        """Emit immediately after an internal write and suppress the duplicate poll event."""
+        self._last_mtime = self._get_mtime()
+        self.data_changed.emit()
 
     def _check_inventory_file(self):
         current_mtime = self._get_mtime()

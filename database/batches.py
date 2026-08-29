@@ -17,27 +17,47 @@ class BatchRepository:
         "Opening_Balance",
     ]
 
+    _batches_cache = None
+    _batches_mtime = None
+    _schema_checked = set()
+
     def __init__(self):
         self.file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "inventory.xlsx"
         )
         self._ensure_sheet()
 
+    def _mtime(self):
+        try:
+            return os.path.getmtime(self.file)
+        except OSError:
+            return None
+
     def _ensure_sheet(self):
-        workbook = load_workbook(self.file)
-        if self.SHEET_NAME not in workbook.sheetnames:
-            sheet = workbook.create_sheet(self.SHEET_NAME)
-            sheet.append(self.HEADERS)
-            workbook.save(self.file)
-        else:
-            sheet = workbook[self.SHEET_NAME]
-            if sheet.max_row == 1 and all(
-                sheet.cell(1, i + 1).value is None for i in range(len(self.HEADERS))
-            ):
-                for i, header in enumerate(self.HEADERS, start=1):
-                    sheet.cell(1, i).value = header
-                workbook.save(self.file)
+        """Ensure the sheet exists without rewriting Excel during normal startup."""
+        key = self.file
+        if key in BatchRepository._schema_checked:
+            return
+
+        workbook = load_workbook(self.file, read_only=True, data_only=True)
+        exists = self.SHEET_NAME in workbook.sheetnames
         workbook.close()
+        if exists:
+            BatchRepository._schema_checked.add(key)
+            return
+
+        workbook = load_workbook(self.file)
+        sheet = workbook.create_sheet(self.SHEET_NAME)
+        sheet.append(self.HEADERS)
+        workbook.save(self.file)
+        workbook.close()
+        BatchRepository._schema_checked.add(key)
+        BatchRepository.invalidate_cache()
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls._batches_cache = None
+        cls._batches_mtime = None
 
     def _next_batch_id(self, sheet):
         max_number = 0
@@ -50,29 +70,35 @@ class BatchRepository:
                     pass
         return f"BT{max_number + 1:05d}"
 
+    def _load_batches(self):
+        mtime = self._mtime()
+        if BatchRepository._batches_cache is None or BatchRepository._batches_mtime != mtime:
+            workbook = load_workbook(self.file, read_only=True, data_only=True)
+            sheet = workbook[self.SHEET_NAME]
+            result = []
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                if not row[0]:
+                    continue
+                result.append(
+                    {
+                        "id": row[0],
+                        "product_id": row[1],
+                        "code": row[2],
+                        "production_date": row[3],
+                        "expiry_date": row[4],
+                        "opening_balance": float(row[5] or 0),
+                    }
+                )
+            workbook.close()
+            BatchRepository._batches_cache = result
+            BatchRepository._batches_mtime = mtime
+        return BatchRepository._batches_cache
+
     def get_batches(self, product_id=None):
-        workbook = load_workbook(self.file, data_only=True)
-        sheet = workbook[self.SHEET_NAME]
-        result = []
-
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            if not row[0]:
-                continue
-            if product_id is not None and row[1] != product_id:
-                continue
-            result.append(
-                {
-                    "id": row[0],
-                    "product_id": row[1],
-                    "code": row[2],
-                    "production_date": row[3],
-                    "expiry_date": row[4],
-                    "opening_balance": float(row[5] or 0),
-                }
-            )
-
-        workbook.close()
-        return result
+        batches = self._load_batches()
+        if product_id is None:
+            return [dict(batch) for batch in batches]
+        return [dict(batch) for batch in batches if batch["product_id"] == product_id]
 
     def get_batch(self, product_id, batch_code):
         wanted = str(batch_code).strip().casefold()
@@ -92,13 +118,7 @@ class BatchRepository:
         expiry_date,
         opening_balance,
     ):
-        """Add a new batch with zero opening balance and one incoming movement.
-
-        The supplied quantity represents the quantity received for the new
-        batch. It is deliberately stored as an incoming transaction instead
-        of Batches.Opening_Balance so it cannot be counted twice at product
-        level.
-        """
+        """Add a new batch with zero opening balance and one incoming movement."""
         batch_code = str(batch_code).strip()
         quantity = float(opening_balance)
         if not batch_code:
@@ -106,7 +126,7 @@ class BatchRepository:
         if quantity <= 0:
             raise ValueError("كمية الباتش يجب أن تكون أكبر من صفر.")
         if expiry_date < production_date:
-            raise ValueError("تاريخ الصلاحية لا يمكن أن يكون قبل تاريخ الإنتاج.")
+            raise ValueError("تاريخ الصلاحية لا يمكن أن تكون قبل تاريخ الإنتاج.")
         if self.batch_exists(product_id, batch_code):
             raise ValueError("كود الباتش موجود بالفعل لهذا الصنف.")
 
@@ -126,7 +146,7 @@ class BatchRepository:
         transactions_sheet = workbook["Transactions"]
         if transactions_sheet.max_column < 8:
             transactions_sheet.cell(1, 8).value = "Batch_Code"
-        elif transactions_sheet.cell(1, 8).value != "Batch_Code":
+        elif str(transactions_sheet.cell(1, 8).value or "").strip() != "Batch_Code":
             transactions_sheet.cell(1, transactions_sheet.max_column + 1).value = "Batch_Code"
 
         batch_id = self._next_batch_id(batches_sheet)
@@ -158,6 +178,7 @@ class BatchRepository:
 
         workbook.save(self.file)
         workbook.close()
+        self.invalidate_cache()
         return batch_id
 
     def get_opening_balance(self, product_id, batch_code):

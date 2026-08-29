@@ -13,6 +13,10 @@ class TransactionRepository:
     TRANSACTION_IN_TYPES = ["إنتاج", "مشتريات", "مردودات مبيعات", "مردودات تسليمات"]
     TRANSACTION_OUT_TYPES = ["صرف للتجزئة", "صرف للتسليمات"]
 
+    _transactions_cache = None
+    _transactions_mtime = None
+    _schema_checked = set()
+
     def __init__(self):
         self.file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "inventory.xlsx"
@@ -20,8 +24,16 @@ class TransactionRepository:
         self.batch_repo = BatchRepository()
         self._ensure_batch_column()
 
+    def _mtime(self):
+        try:
+            return os.path.getmtime(self.file)
+        except OSError:
+            return None
+
     def _ensure_batch_column(self):
-        """Check the transaction schema without writing to Excel at startup."""
+        """Check the transaction schema once per process without writing at startup."""
+        if self.file in TransactionRepository._schema_checked:
+            return True
         workbook = load_workbook(self.file, read_only=True, data_only=True)
         sheet = workbook["Transactions"]
         valid = (
@@ -29,7 +41,13 @@ class TransactionRepository:
             and str(sheet.cell(1, 8).value or "").strip() == "Batch_Code"
         )
         workbook.close()
+        TransactionRepository._schema_checked.add(self.file)
         return valid
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls._transactions_cache = None
+        cls._transactions_mtime = None
 
     @staticmethod
     def _normalize_product_name(value):
@@ -39,10 +57,10 @@ class TransactionRepository:
 
     def _canonical_product_name(self, product_repo, product_id):
         products = product_repo.get_all_products()
-        for _, row in products.iterrows():
-            if row["product_ID"] == product_id:
-                return str(row["Product_Name"]).strip()
-        return None
+        matches = products[products["product_ID"] == product_id]
+        if matches.empty:
+            return None
+        return str(matches.iloc[0]["Product_Name"]).strip()
 
     @staticmethod
     def _ensure_batch_column_for_write(sheet):
@@ -50,6 +68,20 @@ class TransactionRepository:
             sheet.cell(1, 8).value = "Batch_Code"
         elif str(sheet.cell(1, 8).value or "").strip() != "Batch_Code":
             sheet.cell(1, sheet.max_column + 1).value = "Batch_Code"
+
+    def _load_transactions(self):
+        mtime = self._mtime()
+        if (
+            TransactionRepository._transactions_cache is None
+            or TransactionRepository._transactions_mtime != mtime
+        ):
+            workbook = load_workbook(self.file, read_only=True, data_only=True)
+            sheet = workbook["Transactions"]
+            rows = [row for row in sheet.iter_rows(min_row=2, values_only=True)]
+            workbook.close()
+            TransactionRepository._transactions_cache = rows
+            TransactionRepository._transactions_mtime = mtime
+        return TransactionRepository._transactions_cache
 
     def save_transaction(self, product, transaction_type, quantity, notes, batch_code=None):
         quantity = float(quantity)
@@ -94,22 +126,20 @@ class TransactionRepository:
         ])
         workbook.save(self.file)
         workbook.close()
+        self.invalidate_cache()
 
     def get_transactions_by_product(self, product, batch_code=None):
         wanted_product = self._normalize_product_name(product)
         wanted_batch = str(batch_code).strip().casefold() if batch_code is not None else None
-        workbook = load_workbook(self.file, data_only=True)
-        sheet = workbook["Transactions"]
         transactions = []
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            if self._normalize_product_name(row[3]) != wanted_product:
+        for row in self._load_transactions():
+            if len(row) < 4 or self._normalize_product_name(row[3]) != wanted_product:
                 continue
             if wanted_batch is not None:
                 row_batch = row[7] if len(row) > 7 else None
                 if str(row_batch or "").strip().casefold() != wanted_batch:
                     continue
             transactions.append(row)
-        workbook.close()
         return transactions
 
     def _calculate(self, transactions, opening_balance):
@@ -135,7 +165,6 @@ class TransactionRepository:
         return self._calculate(transactions, opening)
 
     def get_product_balance(self, product):
-        """Return (opening, incoming, current_balance) for the product."""
         product_repo = ProductRepository()
         product_id = product_repo.get_product_id(product)
         if product_id is None:
@@ -147,14 +176,51 @@ class TransactionRepository:
         return opening_balance, total_in, balance
 
     def get_inventory_summary(self):
+        """Calculate the complete inventory summary from one cached transaction read."""
         product_repo = ProductRepository()
         products = product_repo.get_all_products()
-        summary = []
+        transactions = self._load_transactions()
+
+        opening_by_product = {}
         for _, row in products.iterrows():
-            product_name = row["Product_Name"]
-            total_opening, total_in, balance = self.get_product_balance(product_name)
-            total_out = total_opening + total_in - balance
-            summary.append([product_name, total_opening, total_in, total_out, balance])
+            product_id = row["product_ID"]
+            opening_by_product[product_id] = float(
+                product_repo.get_opening_balance(product_id) or 0
+            )
+
+        product_lookup = {
+            self._normalize_product_name(row["Product_Name"]): row["Product_Name"]
+            for _, row in products.iterrows()
+        }
+        totals = {
+            normalized: [0.0, 0.0]
+            for normalized in product_lookup
+        }
+        id_by_normalized = {
+            normalized: row["product_ID"]
+            for _, row in products.iterrows()
+            if (normalized := self._normalize_product_name(row["Product_Name"]))
+        }
+
+        for row in transactions:
+            if len(row) < 6:
+                continue
+            normalized = self._normalize_product_name(row[3])
+            if normalized not in totals:
+                continue
+            quantity = float(row[5] or 0)
+            if row[4] in self.TRANSACTION_IN_TYPES:
+                totals[normalized][0] += quantity
+            elif row[4] in self.TRANSACTION_OUT_TYPES:
+                totals[normalized][1] += quantity
+
+        summary = []
+        for normalized, product_name in product_lookup.items():
+            product_id = id_by_normalized[normalized]
+            opening = opening_by_product.get(product_id, 0.0)
+            total_in, total_out = totals[normalized]
+            balance = opening + total_in - total_out
+            summary.append([product_name, opening, total_in, total_out, balance])
         return summary
 
     def check_stock(self, product, requested_quantity, batch_code=None):
@@ -218,6 +284,7 @@ class TransactionRepository:
             raise ValueError("الحركة المطلوب تعديلها غير موجودة.")
         workbook.save(self.file)
         workbook.close()
+        self.invalidate_cache()
         from utils.refresh_manager import refresh_manager
         refresh_manager.data_changed.emit()
 
@@ -226,6 +293,7 @@ class TransactionRepository:
             self._normalize_product_name(existing.get("product")),
             self._normalize_product_name(replacement.get("product")),
         }
+        all_rows = self._load_transactions()
         for normalized_product in affected_products:
             if not normalized_product:
                 continue
@@ -234,7 +302,10 @@ class TransactionRepository:
                 continue
             product_name = self._canonical_product_name(product_repo, product_id)
             opening = float(product_repo.get_opening_balance(product_id) or 0)
-            rows = self.get_transactions_by_product(product_name)
+            rows = [
+                row for row in all_rows
+                if self._normalize_product_name(row[3]) == normalized_product
+            ]
             kept_rows = [row for row in rows if row[0] != existing["id"]]
             _in, _out, balance = self._calculate(kept_rows, opening)
             if self._normalize_product_name(replacement["product"]) == normalized_product:
@@ -246,8 +317,14 @@ class TransactionRepository:
                 raise ValueError(f"تعديل الحركة سيجعل رصيد الصنف سالبًا: {product_name}.")
 
         affected_batches = {
-            (self._normalize_product_name(existing.get("product")), str(existing.get("batch") or "").strip().casefold()),
-            (self._normalize_product_name(replacement.get("product")), str(replacement.get("batch") or "").strip().casefold()),
+            (
+                self._normalize_product_name(existing.get("product")),
+                str(existing.get("batch") or "").strip().casefold(),
+            ),
+            (
+                self._normalize_product_name(replacement.get("product")),
+                str(replacement.get("batch") or "").strip().casefold(),
+            ),
         }
         for normalized_product, normalized_batch in affected_batches:
             if not normalized_product or not normalized_batch:
@@ -261,10 +338,17 @@ class TransactionRepository:
                 raise ValueError("الباتش المختار غير موجود لهذا الصنف.")
             batch_code = batch["code"]
             opening = self.batch_repo.get_opening_balance(product_id, batch_code)
-            rows = self.get_transactions_by_product(product_name, batch_code)
+            rows = [
+                row for row in all_rows
+                if self._normalize_product_name(row[3]) == normalized_product
+                and str((row[7] if len(row) > 7 else "") or "").strip().casefold() == normalized_batch
+            ]
             kept_rows = [row for row in rows if row[0] != existing["id"]]
             _in, _out, balance = self._calculate(kept_rows, opening)
-            if self._normalize_product_name(replacement["product"]) == normalized_product and str(replacement.get("batch") or "").strip().casefold() == normalized_batch:
+            if (
+                self._normalize_product_name(replacement["product"]) == normalized_product
+                and str(replacement.get("batch") or "").strip().casefold() == normalized_batch
+            ):
                 if replacement["type"] in self.TRANSACTION_IN_TYPES:
                     balance += replacement["quantity"]
                 elif replacement["type"] in self.TRANSACTION_OUT_TYPES:
@@ -275,12 +359,16 @@ class TransactionRepository:
     def _validate_delete_balance(self, existing, product_repo):
         product_name = existing.get("product")
         normalized_product = self._normalize_product_name(product_name)
+        all_rows = self._load_transactions()
         if normalized_product:
             product_id = product_repo.get_product_id(normalized_product)
             if product_id is not None:
                 canonical_product = self._canonical_product_name(product_repo, product_id)
                 opening = float(product_repo.get_opening_balance(product_id) or 0)
-                rows = self.get_transactions_by_product(canonical_product)
+                rows = [
+                    row for row in all_rows
+                    if self._normalize_product_name(row[3]) == normalized_product
+                ]
                 kept_rows = [row for row in rows if row[0] != existing["id"]]
                 _in, _out, balance = self._calculate(kept_rows, opening)
                 if balance < 0:
@@ -298,20 +386,29 @@ class TransactionRepository:
             raise ValueError("الباتش المرتبط بالحركة غير موجود لهذا الصنف.")
         canonical_batch = batch["code"]
         opening = self.batch_repo.get_opening_balance(product_id, canonical_batch)
-        rows = self.get_transactions_by_product(canonical_product, canonical_batch)
+        rows = [
+            row for row in all_rows
+            if self._normalize_product_name(row[3]) == normalized_product
+            and str((row[7] if len(row) > 7 else "") or "").strip().casefold() == canonical_batch.strip().casefold()
+        ]
         kept_rows = [row for row in rows if row[0] != existing["id"]]
         _in, _out, balance = self._calculate(kept_rows, opening)
         if balance < 0:
             raise ValueError(f"حذف الحركة سيجعل رصيد الباتش سالبًا: {canonical_batch}.")
 
     def get_transaction_by_id(self, transaction_id):
-        workbook = load_workbook(self.file, data_only=True)
-        sheet = workbook["Transactions"]
-        for row in sheet.iter_rows(min_row=2, values_only=True):
+        for row in self._load_transactions():
             if row[0] == transaction_id:
-                workbook.close()
-                return {"id": row[0], "date": row[1], "time": row[2], "product": row[3], "type": row[4], "quantity": row[5], "notes": row[6], "batch": row[7] if len(row) > 7 else ""}
-        workbook.close()
+                return {
+                    "id": row[0],
+                    "date": row[1],
+                    "time": row[2],
+                    "product": row[3],
+                    "type": row[4],
+                    "quantity": row[5],
+                    "notes": row[6],
+                    "batch": row[7] if len(row) > 7 else "",
+                }
         return None
 
     def delete_transaction(self, transaction_id):
@@ -320,6 +417,7 @@ class TransactionRepository:
         if existing is None:
             raise ValueError("الحركة المطلوب حذفها غير موجودة.")
         self._validate_delete_balance(existing, product_repo)
+
         workbook = load_workbook(self.file)
         sheet = workbook["Transactions"]
         for row in range(2, sheet.max_row + 1):
@@ -328,16 +426,13 @@ class TransactionRepository:
                 break
         workbook.save(self.file)
         workbook.close()
+        self.invalidate_cache()
         from utils.refresh_manager import refresh_manager
         refresh_manager.data_changed.emit()
 
     def product_has_transactions(self, product_name):
         wanted_product = self._normalize_product_name(product_name)
-        workbook = load_workbook(self.file, data_only=True)
-        sheet = workbook["Transactions"]
-        for row in sheet.iter_rows(min_row=2, values_only=True):
-            if self._normalize_product_name(row[3]) == wanted_product:
-                workbook.close()
+        for row in self._load_transactions():
+            if len(row) >= 4 and self._normalize_product_name(row[3]) == wanted_product:
                 return True
-        workbook.close()
         return False

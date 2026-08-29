@@ -1,19 +1,53 @@
 import os
 import re
+from datetime import datetime
+
 import pandas as pd
 from openpyxl import load_workbook
-from datetime import datetime
 
 
 class ProductRepository:
+
+    _products_cache = None
+    _products_mtime = None
+    _opening_cache = None
+    _opening_mtime = None
 
     def __init__(self):
         self.file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "inventory.xlsx"
         )
 
+    def _mtime(self):
+        try:
+            return os.path.getmtime(self.file)
+        except OSError:
+            return None
+
     def get_all_products(self):
-        return pd.read_excel(self.file, sheet_name="Products")
+        mtime = self._mtime()
+        if ProductRepository._products_cache is None or ProductRepository._products_mtime != mtime:
+            ProductRepository._products_cache = pd.read_excel(
+                self.file, sheet_name="Products"
+            )
+            ProductRepository._products_mtime = mtime
+        return ProductRepository._products_cache.copy()
+
+    def _get_opening_table(self):
+        mtime = self._mtime()
+        if ProductRepository._opening_cache is None or ProductRepository._opening_mtime != mtime:
+            ProductRepository._opening_cache = pd.read_excel(
+                self.file, sheet_name="Opening_Balance"
+            )
+            ProductRepository._opening_mtime = mtime
+        return ProductRepository._opening_cache
+
+    @classmethod
+    def invalidate_cache(cls):
+        cls._products_cache = None
+        cls._products_mtime = None
+        cls._opening_cache = None
+        cls._opening_mtime = None
 
     def get_product_names(self):
         df = self.get_all_products()
@@ -26,7 +60,6 @@ class ProductRepository:
         return re.sub(r"\s+", " ", str(value).strip()).casefold()
 
     def get_product_id(self, product_name):
-        """Resolve a product by normalized display name."""
         wanted = self._normalize_product_name(product_name)
         if not wanted:
             return None
@@ -38,7 +71,7 @@ class ProductRepository:
         return row.iloc[0]["product_ID"]
 
     def get_opening_balance(self, product_id):
-        df = pd.read_excel(self.file, sheet_name="Opening_Balance")
+        df = self._get_opening_table()
         row = df[df["Product_ID"] == product_id]
         if row.empty:
             return 0
@@ -47,9 +80,6 @@ class ProductRepository:
             return 0
         return float(quantity)
 
-    # =====================================
-    # Add Product
-    # =====================================
     def add_product(self, product_name, unit, opening_balance):
         workbook = load_workbook(self.file)
         products_sheet = workbook["Products"]
@@ -71,6 +101,8 @@ class ProductRepository:
             opening_balance,
         ])
         workbook.save(self.file)
+        workbook.close()
+        self.invalidate_cache()
         from utils.refresh_manager import refresh_manager
         refresh_manager.products_changed.emit()
 
@@ -88,6 +120,8 @@ class ProductRepository:
                 row[2].value = opening_balance
                 break
         workbook.save(self.file)
+        workbook.close()
+        self.invalidate_cache()
         from utils.refresh_manager import refresh_manager
         refresh_manager.products_changed.emit()
 
@@ -104,6 +138,8 @@ class ProductRepository:
                 opening_sheet.delete_rows(row)
                 break
         workbook.save(self.file)
+        workbook.close()
+        self.invalidate_cache()
         from utils.refresh_manager import refresh_manager
         refresh_manager.products_changed.emit()
 

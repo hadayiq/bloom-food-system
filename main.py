@@ -1,5 +1,7 @@
 import sys
 
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
 from main_window import MainWindow
@@ -7,6 +9,10 @@ from main_window import MainWindow
 
 app = QApplication(sys.argv)
 
+# UI Kit foundation: consistent rendering and Arabic-first layout.
+app.setStyle("Fusion")
+app.setLayoutDirection(Qt.RightToLeft)
+app.setFont(QFont("Segoe UI", 10))
 
 with open("styles/bloom.qss", "r", encoding="utf-8") as file:
     base_styles = file.read()
@@ -29,7 +35,6 @@ app.setStyleSheet(
     + "\n\n"
     + modern_input_styles
 )
-
 
 window = MainWindow()
 window.show()

@@ -41,13 +41,18 @@ app.setStyleSheet(
 )
 
 
-def launch_main_window():
-    global window
+# Show the real splash first so the user immediately gets visual feedback.
+# The splash is dismissed when the main window has actually been created,
+# rather than after an arbitrary fixed delay.
+splash = show_splash(app)
+
+try:
     window = MainWindow()
     window.show()
-
-
-# Splash is intentionally minimal: company logo only, then Login/MainWindow.
-splash = show_splash(app, launch_main_window, duration_ms=900)
+    app.processEvents()
+    splash.finish(window)
+except Exception:
+    splash.close()
+    raise
 
 sys.exit(app.exec())

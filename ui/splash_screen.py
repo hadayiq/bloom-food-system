@@ -1,53 +1,51 @@
 import os
 
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QSplashScreen
 
 
 class BloomSplashScreen(QSplashScreen):
-    """Minimal branded splash screen shown before the main window."""
+    """Minimal branded splash shown while the application initializes."""
 
     def __init__(self, logo_path: str):
-        # QSplashScreen expects a QPixmap/QImage (or a QScreen) as its first
-        # argument. Window flags are the second argument.
-        super().__init__(
-            QPixmap(),
-            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint,
-        )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
-
         logo = QPixmap(logo_path)
-        canvas = QPixmap(1250, 750)
-        canvas.fill(Qt.GlobalColor.white)
+        if logo.isNull():
+            raise FileNotFoundError(f"Unable to load splash logo: {logo_path}")
 
         scaled_logo = logo.scaled(
-            500,
-            180,
+            360,
+            120,
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
-        x = (canvas.width() - scaled_logo.width()) // 2
-        y = (canvas.height() - scaled_logo.height()) // 2
+
+        canvas = QPixmap(520, 260)
+        canvas.fill(Qt.GlobalColor.white)
 
         painter = QPainter(canvas)
+        x = (canvas.width() - scaled_logo.width()) // 2
+        y = (canvas.height() - scaled_logo.height()) // 2
         painter.drawPixmap(x, y, scaled_logo)
         painter.end()
 
-        self.setPixmap(canvas)
+        super().__init__(
+            canvas,
+            Qt.WindowType.SplashScreen
+            | Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint,
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
 
 
-def show_splash(app, on_finished, duration_ms: int = 900):
+def show_splash(app):
+    """Show the splash immediately; the caller closes it when initialization is ready."""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     logo_path = os.path.join(base_dir, "icons", "bloom_logo_light.svg")
 
     splash = BloomSplashScreen(logo_path)
     splash.show()
+    splash.raise_()
+    splash.activateWindow()
     app.processEvents()
-
-    def finish():
-        splash.close()
-        on_finished()
-
-    QTimer.singleShot(duration_ms, finish)
     return splash

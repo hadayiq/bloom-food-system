@@ -9,7 +9,12 @@ class BloomSplashScreen(QSplashScreen):
     """Minimal branded splash screen shown before the main window."""
 
     def __init__(self, logo_path: str):
-        super().__init__(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        # QSplashScreen expects a QPixmap/QImage (or a QScreen) as its first
+        # argument. Window flags are the second argument.
+        super().__init__(
+            QPixmap(),
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint,
+        )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
 
         logo = QPixmap(logo_path)

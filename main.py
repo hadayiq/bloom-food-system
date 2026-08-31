@@ -3,9 +3,10 @@ import sys
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMessageBox
 
 from main_window import MainWindow
+from ui.login_page import LoginWindow
 from ui.splash_screen import show_splash
 
 
@@ -41,16 +42,25 @@ app.setStyleSheet(
 )
 
 
-# Show the real splash first so the user immediately gets visual feedback.
-# The splash is dismissed when the main window has actually been created,
-# rather than after an arbitrary fixed delay.
+# Show the splash first, then require authentication before opening the system.
 splash = show_splash(app)
 
+login = LoginWindow()
+login.show()
+login.raise_()
+login.activateWindow()
+app.processEvents()
+
+if login.exec() != LoginWindow.Accepted:
+    splash.close()
+    sys.exit(0)
+
 try:
-    window = MainWindow()
+    window = MainWindow(user_name=login.user_name)
     window.show()
     app.processEvents()
     splash.finish(window)
+    QMessageBox.information(window, "مرحبًا", f"أهلاً بك {login.user_name} 👋")
 except Exception:
     splash.close()
     raise

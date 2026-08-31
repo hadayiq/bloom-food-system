@@ -11,11 +11,13 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFrame,
     QMessageBox,
+    QCheckBox,
+    QSizePolicy,
 )
 
 
 class LoginWindow(QDialog):
-    """Bloom Food login screen with the initial demo account."""
+    """Bloom Food login screen based on the Figma Kit login layout."""
 
     DEMO_EMAIL = "abdelwahabrefat@bloomfood.com"
     DEMO_PASSWORD = "1041999"
@@ -25,116 +27,281 @@ class LoginWindow(QDialog):
         super().__init__()
         self.user_name = self.DISPLAY_NAME
         self.setWindowTitle("Bloom Food - تسجيل الدخول")
-        self.setMinimumSize(900, 600)
-        self.resize(1050, 680)
-        self.setLayoutDirection(Qt.RightToLeft)
+        self.setMinimumSize(1050, 680)
+        self.resize(1200, 800)
+        self.setModal(True)
         self._build_ui()
 
     def _build_ui(self):
-        root = QHBoxLayout(self)
-        root.setContentsMargins(55, 45, 55, 45)
-        root.setSpacing(55)
+        # The Figma reference is a clean two-column login: brand on the left,
+        # 360px form on the right, with generous white space and no card.
+        self.setStyleSheet(
+            """
+            QDialog {
+                background: #FFFFFF;
+            }
+            QLabel {
+                background: transparent;
+            }
+            QLabel#login_heading {
+                color: #2B2F38;
+                font-family: Inter, 'Segoe UI';
+                font-size: 30px;
+                font-weight: 600;
+            }
+            QLabel#login_support {
+                color: #667085;
+                font-family: Inter, 'Segoe UI';
+                font-size: 16px;
+                font-weight: 400;
+            }
+            QLabel#form_label {
+                color: #48505E;
+                font-family: Inter, 'Segoe UI';
+                font-size: 14px;
+                font-weight: 500;
+            }
+            QLineEdit#login_input {
+                background: #FFFFFF;
+                color: #383E49;
+                border: 1px solid #D0D5DD;
+                border-radius: 8px;
+                padding: 10px 14px;
+                min-height: 24px;
+                font-family: Inter, 'Segoe UI';
+                font-size: 16px;
+                font-weight: 400;
+                selection-background-color: #1366D9;
+            }
+            QLineEdit#login_input:focus {
+                border: 1px solid #1366D9;
+            }
+            QCheckBox#remember {
+                color: #48505E;
+                font-family: Inter, 'Segoe UI';
+                font-size: 14px;
+                font-weight: 500;
+                spacing: 8px;
+            }
+            QCheckBox#remember::indicator {
+                width: 16px;
+                height: 16px;
+                border: 1px solid #D0D5DD;
+                border-radius: 4px;
+                background: #FFFFFF;
+            }
+            QCheckBox#remember::indicator:checked {
+                background: #1366D9;
+                border: 1px solid #1366D9;
+            }
+            QPushButton#text_button {
+                border: none;
+                background: transparent;
+                color: #1366D9;
+                font-family: Inter, 'Segoe UI';
+                font-size: 14px;
+                font-weight: 500;
+                padding: 0;
+            }
+            QPushButton#sign_in {
+                background: #1366D9;
+                color: #FFFFFF;
+                border: 1px solid #1366D9;
+                border-radius: 4px;
+                padding: 10px 18px;
+                min-height: 24px;
+                font-family: Inter, 'Segoe UI';
+                font-size: 16px;
+                font-weight: 500;
+            }
+            QPushButton#sign_in:hover {
+                background: #0F5BC2;
+                border-color: #0F5BC2;
+            }
+            QPushButton#google_button {
+                background: #FFFFFF;
+                color: #383E49;
+                border: 1px solid #D0D5DD;
+                border-radius: 4px;
+                padding: 10px 16px;
+                min-height: 24px;
+                font-family: Inter, 'Segoe UI';
+                font-size: 16px;
+                font-weight: 500;
+            }
+            QPushButton#google_button:hover {
+                background: #F8F9FB;
+            }
+            QLabel#footer_text {
+                color: #667085;
+                font-family: Inter, 'Segoe UI';
+                font-size: 14px;
+                font-weight: 400;
+            }
+            QLabel#brand_name {
+                color: #55A936;
+                font-family: Inter, 'Segoe UI';
+                font-size: 24px;
+                font-weight: 600;
+            }
+            """
+        )
 
+        root = QHBoxLayout(self)
+        root.setContentsMargins(70, 50, 70, 50)
+        root.setSpacing(120)
+        root.setDirection(QBoxLayout.LeftToRight if False else QBoxLayout.LeftToRight)
+
+        # Left branding area. Keep the official Bloom Food logo and the user's
+        # supplied profile image already stored in the repository.
         brand = QVBoxLayout()
         brand.setAlignment(Qt.AlignCenter)
+        brand.setSpacing(18)
+        brand.setContentsMargins(0, 0, 0, 0)
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        logo_path = os.path.join(base_dir, "icons", "bloom_logo_light.svg")
+        logo_path = self._asset_path("bloom_logo_splash.svg")
         logo = QLabel()
-        logo.setPixmap(QPixmap(logo_path).scaled(250, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        logo_pixmap = QPixmap(logo_path)
+        if not logo_pixmap.isNull():
+            logo.setPixmap(logo_pixmap.scaled(360, 142, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        logo.setFixedSize(360, 142)
         logo.setAlignment(Qt.AlignCenter)
         brand.addWidget(logo)
 
-        tagline = QLabel("نظام إدارة المخزون")
-        tagline.setObjectName("login_tagline")
-        tagline.setAlignment(Qt.AlignCenter)
-        brand.addWidget(tagline)
-        brand.addSpacing(22)
-
-        avatar_path = os.path.join(base_dir, "icons", "abdelwahab_avatar.png")
+        avatar_path = self._asset_path("abdelwahab_avatar.png")
         avatar = QLabel()
         avatar.setObjectName("login_avatar")
-        avatar.setPixmap(QPixmap(avatar_path).scaled(150, 150, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
-        avatar.setFixedSize(150, 150)
+        avatar_pixmap = QPixmap(avatar_path)
+        if not avatar_pixmap.isNull():
+            avatar.setPixmap(avatar_pixmap.scaled(132, 132, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+        avatar.setFixedSize(132, 132)
         avatar.setAlignment(Qt.AlignCenter)
+        avatar.setStyleSheet(
+            "QLabel#login_avatar { border: 4px solid #F2F4F7; border-radius: 70px; background: #FFFFFF; }"
+        )
         brand.addWidget(avatar, alignment=Qt.AlignCenter)
 
         name = QLabel("عبدالوهاب رفعت")
-        name.setObjectName("login_name")
+        name.setObjectName("brand_name")
         name.setAlignment(Qt.AlignCenter)
         brand.addWidget(name)
-        brand.addStretch()
+        brand.addStretch(1)
 
-        card = QFrame()
-        card.setObjectName("login_card")
-        card.setMinimumWidth(390)
-        card.setMaximumWidth(450)
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(38, 38, 38, 38)
-        card_layout.setSpacing(8)
+        # Right content area follows the Figma Kit's 360px content width.
+        content = QVBoxLayout()
+        content.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        content.setSpacing(0)
+        content.setContentsMargins(0, 85, 0, 0)
 
-        title = QLabel("تسجيل الدخول")
-        title.setObjectName("login_title")
-        card_layout.addWidget(title)
+        header = QVBoxLayout()
+        header.setAlignment(Qt.AlignCenter)
+        header.setSpacing(12)
 
-        subtitle = QLabel("سجّل الدخول للوصول إلى نظام Bloom Food")
-        subtitle.setObjectName("login_subtitle")
-        card_layout.addWidget(subtitle)
-        card_layout.addSpacing(18)
+        mark = QLabel("◆")
+        mark.setAlignment(Qt.AlignCenter)
+        mark.setStyleSheet(
+            "QLabel { color: #1366D9; font-size: 20px; font-weight: 600; min-height: 48px; }"
+        )
+        header.addWidget(mark)
 
-        email_label = QLabel("البريد الإلكتروني")
+        title = QLabel("Log in to your account")
+        title.setObjectName("login_heading")
+        title.setAlignment(Qt.AlignCenter)
+        header.addWidget(title)
+
+        subtitle = QLabel("Welcome back! Please enter your details.")
+        subtitle.setObjectName("login_support")
+        subtitle.setAlignment(Qt.AlignCenter)
+        header.addWidget(subtitle)
+        content.addLayout(header)
+        content.addSpacing(24)
+
+        form = QVBoxLayout()
+        form.setSpacing(20)
+        form.setContentsMargins(0, 0, 0, 0)
+
+        email_label = QLabel("Email")
         email_label.setObjectName("form_label")
-        card_layout.addWidget(email_label)
+        form.addWidget(email_label)
 
         self.email_input = QLineEdit()
-        self.email_input.setPlaceholderText("name@bloomfood.com")
+        self.email_input.setObjectName("login_input")
+        self.email_input.setPlaceholderText("Enter your email")
         self.email_input.setText(self.DEMO_EMAIL)
         self.email_input.setClearButtonEnabled(True)
-        card_layout.addWidget(self.email_input)
+        self.email_input.setFixedHeight(46)
+        form.addWidget(self.email_input)
 
-        password_label = QLabel("كلمة المرور")
+        password_label = QLabel("Password")
         password_label.setObjectName("form_label")
-        card_layout.addWidget(password_label)
+        form.addWidget(password_label)
 
-        password_row = QHBoxLayout()
-        password_row.setSpacing(6)
         self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("أدخل كلمة المرور")
+        self.password_input.setObjectName("login_input")
+        self.password_input.setPlaceholderText("Enter your password")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setText(self.DEMO_PASSWORD)
+        self.password_input.setFixedHeight(46)
         self.password_input.returnPressed.connect(self.login)
+        form.addWidget(self.password_input)
 
-        self.show_password = QPushButton("إظهار")
-        self.show_password.setObjectName("secondary_button")
-        self.show_password.setFixedWidth(78)
-        self.show_password.setMinimumHeight(45)
-        self.show_password.clicked.connect(self.toggle_password)
-        password_row.addWidget(self.password_input, 1)
-        password_row.addWidget(self.show_password)
-        card_layout.addLayout(password_row)
-        card_layout.addSpacing(20)
+        options = QHBoxLayout()
+        options.setContentsMargins(0, 0, 0, 0)
+        options.setSpacing(8)
 
-        self.login_button = QPushButton("تسجيل الدخول")
-        self.login_button.setObjectName("primary_button")
-        self.login_button.setMinimumHeight(50)
+        self.remember = QCheckBox("Remember for 30 days")
+        self.remember.setObjectName("remember")
+        options.addWidget(self.remember)
+        options.addStretch(1)
+
+        forgot = QPushButton("Forgot password")
+        forgot.setObjectName("text_button")
+        forgot.setCursor(Qt.PointingHandCursor)
+        options.addWidget(forgot)
+        form.addLayout(options)
+        form.addSpacing(4)
+
+        self.login_button = QPushButton("Sign in")
+        self.login_button.setObjectName("sign_in")
         self.login_button.setCursor(Qt.PointingHandCursor)
+        self.login_button.setFixedHeight(46)
         self.login_button.clicked.connect(self.login)
-        card_layout.addWidget(self.login_button)
+        form.addWidget(self.login_button)
 
-        hint = QLabel("استخدم بيانات الحساب المصرح بها من مسؤول النظام")
-        hint.setObjectName("login_hint")
-        hint.setAlignment(Qt.AlignCenter)
-        hint.setWordWrap(True)
-        card_layout.addWidget(hint)
-        card_layout.addStretch()
+        google = QPushButton("🌐   Sign in with Google")
+        google.setObjectName("google_button")
+        google.setCursor(Qt.PointingHandCursor)
+        google.setFixedHeight(46)
+        # Google authentication is intentionally visual-only for this demo.
+        form.addWidget(google)
+
+        content.addLayout(form)
+        content.addSpacing(28)
+
+        footer = QHBoxLayout()
+        footer.setAlignment(Qt.AlignCenter)
+        footer.setSpacing(4)
+        footer_text = QLabel("Don't have an account?")
+        footer_text.setObjectName("footer_text")
+        footer.addWidget(footer_text)
+        sign_up = QPushButton("Sign up")
+        sign_up.setObjectName("text_button")
+        sign_up.setCursor(Qt.PointingHandCursor)
+        footer.addWidget(sign_up)
+        content.addLayout(footer)
 
         root.addLayout(brand, 1)
-        root.addWidget(card)
+        content_frame = QFrame()
+        content_frame.setLayout(content)
+        content_frame.setFixedWidth(360)
+        root.addWidget(content_frame, 0, Qt.AlignTop | Qt.AlignRight)
 
-    def toggle_password(self):
-        visible = self.password_input.echoMode() == QLineEdit.Password
-        self.password_input.setEchoMode(QLineEdit.Normal if visible else QLineEdit.Password)
-        self.show_password.setText("إخفاء" if visible else "إظهار")
+        self.email_input.setFocus()
+
+    @staticmethod
+    def _asset_path(filename):
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_dir, "icons", filename)
 
     def login(self):
         email = self.email_input.text().strip().lower()

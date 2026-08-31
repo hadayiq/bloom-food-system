@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title desc">
+  <title id="title">Bloom Food</title>
+  <desc id="desc">Bloom Food logo with black BLOOM FOOD wordmark, green leaf and green tagline.</desc>
+  <rect width="760" height="300" fill="#fff"/>
+  <g fill="#000" font-family="Bodoni 72, Bodoni MT, Didot, Times New Roman, serif" font-weight="700" text-anchor="middle">
+    <text x="400" y="112" font-size="104" letter-spacing="-4">BLOOM</text>
+    <text x="400" y="210" font-size="104" letter-spacing="-4">FOOD</text>
+  </g>
+  <g transform="translate(96 134)">
+    <path fill="#55B947" d="M0 38C10 3 42-13 78 1C66 35 42 58 7 57C5 50 2 44 0 38Z"/>
+    <path fill="#78C94E" d="M9 58C37 48 62 49 88 62C71 76 46 82 18 74C14 69 11 64 9 58Z"/>
+    <path fill="#fff" d="M18 49C31 30 43 17 58 8C48 25 39 42 33 60C28 57 23 54 18 49Z"/>
+  </g>
+  <text x="380" y="264" fill="#55A936" font-family="Segoe UI, Arial, sans-serif" font-size="25" font-weight="600" letter-spacing="7" text-anchor="middle">For food industries</text>
+</svg>

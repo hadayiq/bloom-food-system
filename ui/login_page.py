@@ -1,9 +1,9 @@
 import os
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
-    QWidget,
+    QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,
@@ -11,12 +11,11 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFrame,
     QMessageBox,
-    QSizePolicy,
 )
 
 
-class LoginWindow(QWidget):
-    """Bloom Food login screen with a small local demo account."""
+class LoginWindow(QDialog):
+    """Bloom Food login screen with the initial demo account."""
 
     DEMO_EMAIL = "abdelwahabrefat@bloomfood.com"
     DEMO_PASSWORD = "1041999"
@@ -24,7 +23,6 @@ class LoginWindow(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.authenticated = False
         self.user_name = self.DISPLAY_NAME
         self.setWindowTitle("Bloom Food - تسجيل الدخول")
         self.setMinimumSize(900, 600)
@@ -40,11 +38,8 @@ class LoginWindow(QWidget):
         brand = QVBoxLayout()
         brand.setAlignment(Qt.AlignCenter)
 
-        logo_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "icons",
-            "bloom_logo_light.svg",
-        )
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        logo_path = os.path.join(base_dir, "icons", "bloom_logo_light.svg")
         logo = QLabel()
         logo.setPixmap(QPixmap(logo_path).scaled(250, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo.setAlignment(Qt.AlignCenter)
@@ -56,11 +51,7 @@ class LoginWindow(QWidget):
         brand.addWidget(tagline)
         brand.addSpacing(22)
 
-        avatar_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "icons",
-            "abdelwahab_avatar.png",
-        )
+        avatar_path = os.path.join(base_dir, "icons", "abdelwahab_avatar.png")
         avatar = QLabel()
         avatar.setObjectName("login_avatar")
         avatar.setPixmap(QPixmap(avatar_path).scaled(150, 150, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
@@ -150,8 +141,7 @@ class LoginWindow(QWidget):
         password = self.password_input.text()
 
         if email == self.DEMO_EMAIL and password == self.DEMO_PASSWORD:
-            self.authenticated = True
-            self.close()
+            self.accept()
             return
 
         QMessageBox.warning(

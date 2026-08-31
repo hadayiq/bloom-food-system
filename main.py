@@ -39,6 +39,14 @@ app.setStyleSheet(
     + ui_v2_component_styles
     + "\n\n"
     + modern_input_styles
+    + "\n\n"
+    + "QFrame#login_card { background: #FFFFFF; border: 1px solid #DCE6DE; border-radius: 18px; }\n"
+    + "QLabel#login_title { color: #2F6338; font-size: 23pt; font-weight: 800; }\n"
+    + "QLabel#login_subtitle { color: #7B877F; font-size: 10.5pt; }\n"
+    + "QLabel#login_tagline { color: #4B9A4A; font-size: 15pt; font-weight: 700; }\n"
+    + "QLabel#login_name { color: #25332A; font-size: 14pt; font-weight: 700; }\n"
+    + "QLabel#login_hint { color: #89958D; font-size: 9pt; }\n"
+    + "QLabel#login_avatar { border: 4px solid #E7F3E7; border-radius: 75px; background: #FFFFFF; }\n"
 )
 
 
@@ -56,11 +64,11 @@ if login.exec() != LoginWindow.Accepted:
     sys.exit(0)
 
 try:
-    window = MainWindow(user_name=login.user_name)
+    window = MainWindow()
     window.show()
     app.processEvents()
     splash.finish(window)
-    QMessageBox.information(window, "مرحبًا", f"أهلاً بك {login.user_name} 👋")
+    QMessageBox.information(window, "مرحبًا", "أهلاً بك عبدالوهاب 👋")
 except Exception:
     splash.close()
     raise

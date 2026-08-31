@@ -6,15 +6,13 @@ from PySide6.QtWidgets import QSplashScreen
 
 
 class BloomSplashScreen(QSplashScreen):
-    """Simple Bloom Food splash screen."""
+    """Simple Bloom Food splash screen using the approved PNG logo."""
 
     def __init__(self, logo_path: str):
         logo = QPixmap(logo_path)
-
         if logo.isNull():
             raise FileNotFoundError(f"Unable to load splash logo: {logo_path}")
 
-        # Keep the approved vector logo clear and proportionally scaled.
         logo = logo.scaled(
             560,
             230,
@@ -24,34 +22,17 @@ class BloomSplashScreen(QSplashScreen):
 
         super().__init__(
             logo,
-            Qt.WindowType.SplashScreen
-            | Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.WindowStaysOnTopHint,
+            Qt.WindowType.SplashScreen | Qt.WindowType.FramelessWindowHint,
         )
-
-        self.setAttribute(
-            Qt.WidgetAttribute.WA_DeleteOnClose,
-            False,
-        )
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
 
 
 def show_splash(app):
     """Show the splash immediately while the application initializes."""
-
-    # splash_screen.py lives directly under <project>/ui/.
-    # Two parent levels reach the project root.
-    base_dir = os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__))
-    )
-
-    logo_path = os.path.join(
-        base_dir,
-        "icons",
-        "bloom_logo_splash.svg",
-    )
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    logo_path = os.path.join(base_dir, "icons", "bloom_logo.png")
 
     splash = BloomSplashScreen(logo_path)
-
     screen = app.primaryScreen()
     if screen:
         geometry = screen.availableGeometry()
@@ -62,5 +43,4 @@ def show_splash(app):
     splash.show()
     splash.raise_()
     app.processEvents()
-
     return splash

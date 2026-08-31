@@ -38,8 +38,10 @@ class BloomSplashScreen(QSplashScreen):
 def show_splash(app):
     """Show the splash immediately while the application initializes."""
 
+    # splash_screen.py lives directly under <project>/ui/.
+    # Two parent levels reach the project root.
     base_dir = os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.path.dirname(os.path.abspath(__file__))
     )
 
     logo_path = os.path.join(

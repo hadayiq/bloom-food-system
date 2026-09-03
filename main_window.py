@@ -33,20 +33,21 @@ class MainWindow(QWidget):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(280)
+        sidebar.setFixedSize(280, 960)
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(24, 24, 24, 32)
-        sidebar_layout.setSpacing(8)
+        sidebar_layout.setSpacing(10)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
-        logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
+        logo_path = os.path.join(icons_dir, "bloom_logo.png")
         if os.path.exists(logo_path):
-            logo.setPixmap(QPixmap(logo_path))
-        logo.setScaledContents(True)
-        logo.setFixedHeight(72)
+            pixmap = QPixmap(logo_path)
+            logo.setPixmap(pixmap)
+            logo.setScaledContents(False)
+            logo.setFixedSize(232, 72)
         logo.setAlignment(Qt.AlignCenter)
         sidebar_layout.addWidget(logo)
 

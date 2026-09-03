@@ -34,9 +34,8 @@ class MainWindow(QWidget):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(280)
-        sidebar.setMinimumHeight(0)
-        sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        sidebar.setFixedSize(280, 960)
+        sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
 
@@ -85,8 +84,7 @@ class MainWindow(QWidget):
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
             button.setIconSize(QSize(20, 20))
             button.setCursor(Qt.PointingHandCursor)
-            button.setMinimumHeight(56)
-            button.setMaximumHeight(56)
+            button.setFixedHeight(56)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.LeftToRight)
             sidebar_layout.addWidget(button, 0, Qt.AlignTop)
@@ -98,8 +96,7 @@ class MainWindow(QWidget):
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
         self.btn_exit.setIconSize(QSize(20, 20))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
-        self.btn_exit.setMinimumHeight(56)
-        self.btn_exit.setMaximumHeight(56)
+        self.btn_exit.setFixedHeight(56)
         self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
         sidebar_layout.addWidget(self.btn_exit, 0, Qt.AlignBottom)

@@ -50,7 +50,6 @@ class LoginWindow(QDialog):
         root.setSpacing(70)
         root.setDirection(QBoxLayout.LeftToRight)
 
-        # Left side: the exact uploaded Bloom Food PNG, unchanged.
         brand_panel = QFrame()
         brand_panel.setObjectName("brand_panel")
         brand_layout = QVBoxLayout(brand_panel)
@@ -59,14 +58,13 @@ class LoginWindow(QDialog):
 
         logo = QLabel()
         logo.setAlignment(Qt.AlignCenter)
-        logo_pixmap = QPixmap(self._asset_path("bloom_logo.png"))
+        logo_pixmap = QPixmap(self._asset_path("bloom_logo.svg"))
         if not logo_pixmap.isNull():
-            logo.setPixmap(logo_pixmap)
+            logo.setPixmap(logo_pixmap.scaled(420, 284, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo.setFixedSize(420, 284)
         brand_layout.addWidget(logo, 0, Qt.AlignCenter)
         root.addWidget(brand_panel, 1)
 
-        # Right side: login form.
         card = QFrame()
         card.setObjectName("login_card")
         card.setFixedWidth(560)
@@ -80,7 +78,6 @@ class LoginWindow(QDialog):
 
         title = QLabel("Log in to your account")
         title.setObjectName("login_heading")
-        title.setWordWrap(False)
         card_layout.addWidget(title)
         card_layout.addSpacing(8)
 

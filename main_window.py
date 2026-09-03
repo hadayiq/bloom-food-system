@@ -34,7 +34,9 @@ class MainWindow(QWidget):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedSize(280, 960)
+        sidebar.setFixedWidth(280)
+        sidebar.setMinimumHeight(0)
+        sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
 
@@ -52,12 +54,13 @@ class MainWindow(QWidget):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
         pixmap = QPixmap(logo_path)
         if not pixmap.isNull():
-            logo.setPixmap(pixmap.scaled(190, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logo.setPixmap(pixmap.scaled(150, 72, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         sidebar_layout.addWidget(logo, 0, Qt.AlignCenter)
 
         company_name = QLabel("BLOOM FOOD")
         company_name.setObjectName("sidebar_company_name")
         company_name.setAlignment(Qt.AlignCenter)
+        company_name.setFixedHeight(24)
         sidebar_layout.addWidget(company_name)
         sidebar_layout.addSpacing(24)
 
@@ -82,9 +85,11 @@ class MainWindow(QWidget):
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
             button.setIconSize(QSize(20, 20))
             button.setCursor(Qt.PointingHandCursor)
+            button.setMinimumHeight(56)
+            button.setMaximumHeight(56)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.LeftToRight)
-            sidebar_layout.addWidget(button)
+            sidebar_layout.addWidget(button, 0, Qt.AlignTop)
 
         sidebar_layout.addStretch(1)
 
@@ -93,9 +98,11 @@ class MainWindow(QWidget):
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
         self.btn_exit.setIconSize(QSize(20, 20))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
+        self.btn_exit.setMinimumHeight(56)
+        self.btn_exit.setMaximumHeight(56)
         self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
-        sidebar_layout.addWidget(self.btn_exit)
+        sidebar_layout.addWidget(self.btn_exit, 0, Qt.AlignBottom)
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("content_area")

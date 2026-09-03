@@ -6,12 +6,12 @@
 }
 
 QWidget {
-    background: #F7F9FC;
+    background: #FFFFFF;
     color: #243447;
 }
 
 QMainWindow, QDialog {
-    background: #F7F9FC;
+    background: #FFFFFF;
 }
 
 QFrame, QGroupBox {
@@ -91,7 +91,7 @@ QPushButton[class="success"], QPushButton#saveButton {
 
 QTableWidget, QTableView, QListWidget, QTreeWidget {
     background: #FFFFFF;
-    alternate-background-color: #F7F9FC;
+    alternate-background-color: #FFFFFF;
     border: 1px solid #E5EAF0;
     border-radius: 8px;
     gridline-color: #E9EEF4;

@@ -27,12 +27,12 @@ class LoginWindow(QDialog):
     def _build_ui(self):
         self.setStyleSheet("""
             QDialog { background: #FFFFFF; }
-            QLabel { background: transparent; }
+            QLabel { background: transparent; border: none; }
             QFrame#brand_panel { background: #FFFFFF; border: none; }
-            QFrame#login_card { background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 18px; }
-            QLabel#login_heading { color: #101828; font-family: Inter, 'Segoe UI'; font-size: 30px; font-weight: 600; }
-            QLabel#login_support { color: #667085; font-family: Inter, 'Segoe UI'; font-size: 16px; font-weight: 400; }
-            QLabel#form_label { color: #344054; font-family: Inter, 'Segoe UI'; font-size: 14px; font-weight: 500; }
+            QFrame#login_card { background: #FFFFFF; border: none; }
+            QLabel#login_heading { color: #101828; border: none; font-family: Inter, 'Segoe UI'; font-size: 30px; font-weight: 600; }
+            QLabel#login_support { color: #667085; border: none; font-family: Inter, 'Segoe UI'; font-size: 16px; font-weight: 400; }
+            QLabel#form_label { color: #344054; border: none; font-family: Inter, 'Segoe UI'; font-size: 14px; font-weight: 500; }
             QLineEdit#login_input { background: #FFFFFF; color: #101828; border: 1px solid #D0D5DD; border-radius: 8px; padding: 0 14px; font-family: Inter, 'Segoe UI'; font-size: 16px; }
             QLineEdit#login_input:focus { border: 1px solid #1366D9; }
             QCheckBox#remember { color: #344054; font-family: Inter, 'Segoe UI'; font-size: 14px; spacing: 8px; }
@@ -58,7 +58,9 @@ class LoginWindow(QDialog):
 
         logo = QLabel()
         logo.setAlignment(Qt.AlignCenter)
-        logo_pixmap = QPixmap(self._asset_path("bloom_logo.svg"))
+        logo_pixmap = QPixmap(self._asset_path("bloomfood_logo.png"))
+        if logo_pixmap.isNull():
+            logo_pixmap = QPixmap(self._asset_path("bloom_logo.png"))
         if not logo_pixmap.isNull():
             logo.setPixmap(logo_pixmap.scaled(420, 284, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo.setFixedSize(420, 284)
@@ -71,18 +73,15 @@ class LoginWindow(QDialog):
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(52, 42, 52, 42)
 
-        tag = QLabel("BLOOM FOOD")
-        tag.setStyleSheet("color: #1366D9; font-family: Inter, 'Segoe UI'; font-size: 16px; font-weight: 500;")
-        card_layout.addWidget(tag)
-        card_layout.addSpacing(8)
-
         title = QLabel("Log in to your account")
         title.setObjectName("login_heading")
+        title.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(title)
         card_layout.addSpacing(8)
 
         subtitle = QLabel("Welcome back! Please enter your details.")
         subtitle.setObjectName("login_support")
+        subtitle.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(subtitle)
         card_layout.addSpacing(34)
 

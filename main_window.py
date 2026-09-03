@@ -70,19 +70,16 @@ class MainWindow(QWidget):
 
         self.icon_files = {
             self.btn_dashboard: ("dashboard.svg", "dashboard_active.svg"),
-            self.btn_inventory: ("inventory.svg", "inventory_active.svg"),
+            self.btn_inventory: ("products.svg", "products_active.svg"),
             self.btn_reports: ("reports.svg", "reports_active.svg"),
-            self.btn_product: ("product.svg", "product_active.svg"),
-            self.btn_subinventory: ("subinventory.svg", "subinventory_active.svg"),
-            self.btn_orders: ("orders.svg", "orders_active.svg"),
+            self.btn_product: ("product_card.svg", "product_card_active.svg"),
+            self.btn_subinventory: ("subwarehouse.svg", "subwarehouse_active.svg"),
+            self.btn_orders: ("transaction.svg", "transaction_active.svg"),
         }
 
         for button, (icon_name, _) in self.icon_files.items():
             button.setObjectName("sidebar_button")
-            icon_path = os.path.join(icons_dir, icon_name)
-            if not os.path.exists(icon_path):
-                icon_path = os.path.join(icons_dir, icon_name.replace(".svg", ""))
-            button.setIcon(QIcon(icon_path))
+            button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
             button.setIconSize(QSize(20, 20))
             button.setCursor(Qt.PointingHandCursor)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -165,10 +162,9 @@ class MainWindow(QWidget):
     def _set_sidebar_icon(self, button, active=False):
         normal_icon, active_icon = self.icon_files[button]
         icon_name = active_icon if active else normal_icon
-        icon_path = os.path.join(
+        button.setIcon(QIcon(os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "icons", icon_name
-        )
-        button.setIcon(QIcon(icon_path))
+        )))
 
     def change_page(self, index, active_button):
         self.stack.setCurrentIndex(index)

@@ -26,9 +26,9 @@ class LoginWindow(QDialog):
 
     def _build_ui(self):
         self.setStyleSheet("""
-            QDialog { background: #C6C6C6; }
+            QDialog { background: #FFFFFF; }
             QLabel { background: transparent; }
-            QFrame#brand_panel { background: #C6C6C6; border: none; }
+            QFrame#brand_panel { background: #FFFFFF; border: none; }
             QFrame#login_card { background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 18px; }
             QLabel#login_heading { color: #101828; font-family: Inter, 'Segoe UI'; font-size: 30px; font-weight: 600; }
             QLabel#login_support { color: #667085; font-family: Inter, 'Segoe UI'; font-size: 16px; font-weight: 400; }

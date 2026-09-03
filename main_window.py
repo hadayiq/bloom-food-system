@@ -22,11 +22,13 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Bloom Food - Inventory System")
         self.resize(1250, 750)
+        self.setLayoutDirection(Qt.LeftToRight)
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         main_layout.setDirection(QBoxLayout.LeftToRight)
+        main_layout.setLayoutDirection(Qt.LeftToRight)
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         icons_dir = os.path.join(base_dir, "icons")
@@ -34,11 +36,13 @@ class MainWindow(QWidget):
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
         sidebar.setFixedSize(280, 960)
+        sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(24, 24, 24, 32)
         sidebar_layout.setSpacing(10)
+        sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
@@ -95,6 +99,7 @@ class MainWindow(QWidget):
 
         self.stack = QStackedWidget()
         self.stack.setObjectName("content_area")
+        self.stack.setLayoutDirection(Qt.LeftToRight)
 
         self.dashboard_page = InventorySummaryPage()
         self.add_page = AddTransactionPage()
@@ -130,8 +135,8 @@ class MainWindow(QWidget):
         self.btn_orders.clicked.connect(lambda: self.change_page(1, self.btn_orders))
         self.btn_exit.clicked.connect(self.confirm_exit)
 
-        main_layout.addWidget(sidebar)
-        main_layout.addWidget(self.stack)
+        main_layout.addWidget(sidebar, 0, Qt.AlignTop | Qt.AlignLeft)
+        main_layout.addWidget(self.stack, 1)
         self.change_page(0, self.btn_dashboard)
 
     @staticmethod

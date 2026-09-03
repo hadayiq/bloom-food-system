@@ -48,10 +48,17 @@ QLabel#sidebar_company_name {
     border: none;
 }
 
+QLabel#sidebar_logo {
+    min-height: 72px;
+    max-height: 72px;
+}
+
 QLabel#sidebar_company_name {
     color: #1570EF;
     font-size: 11pt;
     font-weight: 600;
+    min-height: 24px;
+    max-height: 24px;
 }
 
 QPushButton#sidebar_button {
@@ -65,7 +72,6 @@ QPushButton#sidebar_button {
     font-weight: 500;
     text-align: left;
     border: none;
-    spacing: 10px;
 }
 
 QPushButton#sidebar_button:hover {

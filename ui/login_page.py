@@ -1,5 +1,5 @@
 import os
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QFrame, QMessageBox, QCheckBox, QToolButton, QBoxLayout
 
@@ -57,7 +57,7 @@ class LoginWindow(QDialog):
         self.password_eye = QToolButton(); self.password_eye.setObjectName("password_eye"); self.password_eye.setText("◉"); self.password_eye.clicked.connect(self._toggle_password); password_layout.addWidget(self.password_eye); password_row.setFixedHeight(50); card_layout.addWidget(password_row); card_layout.addSpacing(18)
         options = QHBoxLayout(); self.remember = QCheckBox("Remember for 30 days"); self.remember.setObjectName("remember"); options.addWidget(self.remember); options.addStretch(1); forgot = QPushButton("Forgot password?"); forgot.setObjectName("link_button"); options.addWidget(forgot); card_layout.addLayout(options); card_layout.addSpacing(28)
         self.login_button = QPushButton("Sign in"); self.login_button.setObjectName("sign_in"); self.login_button.setFixedHeight(50); self.login_button.clicked.connect(self.login); card_layout.addWidget(self.login_button); card_layout.addSpacing(18)
-        google = QPushButton("Sign in with Google"); google.setObjectName("google_button"); google.setIcon(QIcon(self._asset_path("google_logo.svg"))); google.setIconSize(Qt.QSize(22, 22)); google.setFixedHeight(50); card_layout.addWidget(google); card_layout.addSpacing(30)
+        google = QPushButton("Sign in with Google"); google.setObjectName("google_button"); google.setIcon(QIcon(self._asset_path("google_logo.svg"))); google.setIconSize(QSize(22, 22)); google.setFixedHeight(50); card_layout.addWidget(google); card_layout.addSpacing(30)
         footer = QHBoxLayout(); footer.setAlignment(Qt.AlignCenter); footer.setSpacing(6); footer.addWidget(QLabel("Don't have an account?")); sign_up = QPushButton("Sign up"); sign_up.setObjectName("link_button"); footer.addWidget(sign_up); card_layout.addLayout(footer)
         root.addWidget(card, 0, Qt.AlignVCenter | Qt.AlignRight); self.email_input.setFocus()
 

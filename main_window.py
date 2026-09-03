@@ -28,7 +28,6 @@ class MainWindow(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         main_layout.setDirection(QBoxLayout.LeftToRight)
-        main_layout.setLayoutDirection(Qt.LeftToRight)
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         icons_dir = os.path.join(base_dir, "icons")

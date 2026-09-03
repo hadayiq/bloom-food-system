@@ -45,14 +45,15 @@ class MainWindow(QWidget):
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
-        logo_path = os.path.join(icons_dir, "bloom_logo.png")
-        if os.path.exists(logo_path):
-            pixmap = QPixmap(logo_path)
-            logo.setPixmap(pixmap)
-            logo.setScaledContents(False)
-            logo.setFixedSize(232, 72)
         logo.setAlignment(Qt.AlignCenter)
-        sidebar_layout.addWidget(logo)
+        logo.setFixedSize(232, 72)
+        logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
+        if not os.path.exists(logo_path):
+            logo_path = os.path.join(icons_dir, "bloom_logo.png")
+        pixmap = QPixmap(logo_path)
+        if not pixmap.isNull():
+            logo.setPixmap(pixmap.scaled(190, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        sidebar_layout.addWidget(logo, 0, Qt.AlignCenter)
 
         company_name = QLabel("BLOOM FOOD")
         company_name.setObjectName("sidebar_company_name")
@@ -69,17 +70,20 @@ class MainWindow(QWidget):
 
         self.icon_files = {
             self.btn_dashboard: ("dashboard.svg", "dashboard_active.svg"),
-            self.btn_inventory: ("products.svg", "products_active.svg"),
+            self.btn_inventory: ("inventory.svg", "inventory_active.svg"),
             self.btn_reports: ("reports.svg", "reports_active.svg"),
-            self.btn_product: ("product_card.svg", "product_card_active.svg"),
-            self.btn_subinventory: ("subwarehouse.svg", "subwarehouse_active.svg"),
-            self.btn_orders: ("transaction.svg", "transaction_active.svg"),
+            self.btn_product: ("product.svg", "product_active.svg"),
+            self.btn_subinventory: ("subinventory.svg", "subinventory_active.svg"),
+            self.btn_orders: ("orders.svg", "orders_active.svg"),
         }
 
         for button, (icon_name, _) in self.icon_files.items():
             button.setObjectName("sidebar_button")
-            button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
-            button.setIconSize(QSize(22, 22))
+            icon_path = os.path.join(icons_dir, icon_name)
+            if not os.path.exists(icon_path):
+                icon_path = os.path.join(icons_dir, icon_name.replace(".svg", ""))
+            button.setIcon(QIcon(icon_path))
+            button.setIconSize(QSize(20, 20))
             button.setCursor(Qt.PointingHandCursor)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.LeftToRight)
@@ -90,7 +94,7 @@ class MainWindow(QWidget):
         self.btn_exit = QPushButton("Logout")
         self.btn_exit.setObjectName("sidebar_logout_button")
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
-        self.btn_exit.setIconSize(QSize(22, 22))
+        self.btn_exit.setIconSize(QSize(20, 20))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
         self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
@@ -161,9 +165,10 @@ class MainWindow(QWidget):
     def _set_sidebar_icon(self, button, active=False):
         normal_icon, active_icon = self.icon_files[button]
         icon_name = active_icon if active else normal_icon
-        button.setIcon(QIcon(os.path.join(
+        icon_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "icons", icon_name
-        )))
+        )
+        button.setIcon(QIcon(icon_path))
 
     def change_page(self, index, active_button):
         self.stack.setCurrentIndex(index)

@@ -9,30 +9,29 @@ QSpinBox,
 QDoubleSpinBox,
 QDateEdit {
     background-color: #FFFFFF;
-    color: #172033;
-    border: 1px solid #D7DEE8;
-    border-radius: 7px;
+    color: #383E49;
+    border: 1px solid #D5D9E2;
+    border-radius: 8px;
     padding: 7px 11px;
     min-height: 36px;
     font-size: 10pt;
     selection-background-color: #DCEBFF;
-    selection-color: #172033;
+    selection-color: #383E49;
 }
 
 QTextEdit,
 QPlainTextEdit {
     background-color: #FFFFFF;
-    color: #172033;
-    border: 1px solid #D7DEE8;
-    border-radius: 7px;
+    color: #383E49;
+    border: 1px solid #D5D9E2;
+    border-radius: 8px;
     padding: 9px 11px;
     min-height: 88px;
     font-size: 10pt;
     selection-background-color: #DCEBFF;
-    selection-color: #172033;
+    selection-color: #383E49;
 }
 
-/* Hover */
 QLineEdit:hover,
 QComboBox:hover,
 QSpinBox:hover,
@@ -40,11 +39,10 @@ QDoubleSpinBox:hover,
 QDateEdit:hover,
 QTextEdit:hover,
 QPlainTextEdit:hover {
-    border: 1px solid #AFC4DF;
+    border: 1px solid #B2D0FF;
     background-color: #FFFFFF;
 }
 
-/* Focus — Bloom blue, matching the reference UI */
 QLineEdit:focus,
 QComboBox:focus,
 QSpinBox:focus,
@@ -52,7 +50,7 @@ QDoubleSpinBox:focus,
 QDateEdit:focus,
 QTextEdit:focus,
 QPlainTextEdit:focus {
-    border: 2px solid #2563EB;
+    border: 2px solid #1570EF;
     padding: 6px 10px;
     background-color: #FFFFFF;
 }
@@ -62,7 +60,6 @@ QPlainTextEdit:focus {
     padding: 8px 10px;
 }
 
-/* Disabled */
 QLineEdit:disabled,
 QComboBox:disabled,
 QSpinBox:disabled,
@@ -71,19 +68,17 @@ QDateEdit:disabled,
 QTextEdit:disabled,
 QPlainTextEdit:disabled {
     background-color: #F3F5F8;
-    color: #8B95A5;
+    color: #858D9D;
     border: 1px solid #E0E5EC;
 }
 
-/* Read-only */
 QLineEdit[readOnly="true"],
 QTextEdit[readOnly="true"] {
     background-color: #F7F9FC;
 }
 
-/* Labels used above form controls */
 QLabel#form_label {
-    color: #172033;
+    color: #383E49;
     font-size: 9.5pt;
     font-weight: 700;
     background: transparent;
@@ -92,9 +87,6 @@ QLabel#form_label {
     min-height: 20px;
 }
 
-/* ---------------------------------------------------------
-   COMBOBOX — simple clean chevron on the RIGHT
-   --------------------------------------------------------- */
 QComboBox {
     padding-left: 11px;
     padding-right: 38px;
@@ -121,22 +113,22 @@ QComboBox::down-arrow {
 
 QComboBox::drop-down:hover {
     background: #F4F7FB;
-    border-radius: 0 7px 7px 0;
+    border-radius: 0 8px 8px 0;
 }
 
 QComboBox:on {
-    border-color: #2563EB;
+    border-color: #1570EF;
 }
 
 QComboBox QAbstractItemView {
     background-color: #FFFFFF;
-    color: #172033;
-    border: 1px solid #D7DEE8;
+    color: #383E49;
+    border: 1px solid #D5D9E2;
     border-radius: 8px;
     padding: 5px;
     outline: none;
     selection-background-color: #E8F1FF;
-    selection-color: #1D4ED8;
+    selection-color: #1570EF;
 }
 
 QComboBox QAbstractItemView::item {
@@ -151,10 +143,9 @@ QComboBox QAbstractItemView::item:hover {
 
 QComboBox QAbstractItemView::item:selected {
     background-color: #E8F1FF;
-    color: #1D4ED8;
+    color: #1570EF;
 }
 
-/* Numeric fields — clean, compact, no decorative icons */
 QSpinBox,
 QDoubleSpinBox {
     padding-left: 11px;
@@ -170,7 +161,6 @@ QDoubleSpinBox::down-button {
     background: transparent;
 }
 
-/* Date field — clean, without decorative icons */
 QDateEdit {
     padding-left: 11px;
     padding-right: 11px;
@@ -190,21 +180,19 @@ QDateEdit::down-arrow {
     height: 8px;
 }
 
-/* Validation helpers */
 QLabel#input_hint {
-    color: #667085;
+    color: #858D9D;
     font-size: 8.5pt;
     padding: 2px 2px 0 2px;
 }
 
 QLabel#input_error {
-    color: #EF4444;
+    color: #F04438;
     font-size: 8.5pt;
     font-weight: 600;
     padding: 3px 2px 0 2px;
 }
 
-/* Transaction forms can be slightly roomier */
 QFrame#transaction_card QLineEdit,
 QFrame#transaction_card QComboBox,
 QFrame#transaction_card QSpinBox,

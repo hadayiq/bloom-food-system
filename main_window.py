@@ -41,27 +41,34 @@ class MainWindow(QWidget):
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(0, 24, 0, 32)
+        sidebar_layout.setContentsMargins(16, 24, 16, 32)
         sidebar_layout.setSpacing(10)
         sidebar_layout.setDirection(QBoxLayout.TopToBottom)
+
+        brand_row = QWidget()
+        brand_row.setObjectName("sidebar_brand")
+        brand_layout = QHBoxLayout(brand_row)
+        brand_layout.setContentsMargins(0, 0, 0, 0)
+        brand_layout.setSpacing(8)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
         logo.setAlignment(Qt.AlignCenter)
-        logo.setFixedSize(218, 72)
+        logo.setFixedSize(38, 48)
         logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
         if not os.path.exists(logo_path):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
         pixmap = QPixmap(logo_path)
         if not pixmap.isNull():
-            logo.setPixmap(pixmap.scaled(150, 72, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        sidebar_layout.addWidget(logo, 0, Qt.AlignCenter)
+            logo.setPixmap(pixmap.scaled(38, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
         company_name = QLabel("BLOOM FOOD")
         company_name.setObjectName("sidebar_company_name")
-        company_name.setAlignment(Qt.AlignCenter)
-        company_name.setFixedHeight(24)
-        sidebar_layout.addWidget(company_name)
+        company_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        company_name.setWordWrap(False)
+        brand_layout.addWidget(logo, 0, Qt.AlignVCenter)
+        brand_layout.addWidget(company_name, 1, Qt.AlignVCenter)
+        sidebar_layout.addWidget(brand_row)
         sidebar_layout.addSpacing(24)
 
         self.btn_dashboard = QPushButton("Dashboard")
@@ -83,9 +90,10 @@ class MainWindow(QWidget):
         for button, (icon_name, _) in self.icon_files.items():
             button.setObjectName("sidebar_button")
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
-            button.setIconSize(QSize(20, 20))
+            button.setIconSize(QSize(18, 18))
             button.setCursor(Qt.PointingHandCursor)
-            button.setFixedSize(218, 56)
+            button.setFixedHeight(44)
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             button.setLayoutDirection(Qt.LeftToRight)
             sidebar_layout.addWidget(button, 0, Qt.AlignTop)
 
@@ -94,9 +102,10 @@ class MainWindow(QWidget):
         self.btn_exit = QPushButton("Logout")
         self.btn_exit.setObjectName("sidebar_logout_button")
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
-        self.btn_exit.setIconSize(QSize(20, 20))
+        self.btn_exit.setIconSize(QSize(18, 18))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
-        self.btn_exit.setFixedSize(218, 56)
+        self.btn_exit.setFixedHeight(44)
+        self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
         sidebar_layout.addWidget(self.btn_exit, 0, Qt.AlignBottom)
 

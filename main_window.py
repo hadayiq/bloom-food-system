@@ -32,36 +32,48 @@ class MainWindow(QWidget):
         base_dir = os.path.dirname(os.path.abspath(__file__))
         icons_dir = os.path.join(base_dir, "icons")
 
+        # Figma dimensions are design pixels. Convert them to Qt logical pixels
+        # so Windows display scaling does not make the sidebar oversized.
+        screen = self.screen()
+        scale = screen.devicePixelRatio() if screen is not None else 1.0
+        design = lambda value: max(1, round(value / scale))
+
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedSize(280, 960)
+        sidebar.setFixedWidth(design(280))
+        sidebar.setFixedHeight(design(960))
         sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(24, 24, 24, 32)
-        sidebar_layout.setSpacing(10)
+        sidebar_layout.setContentsMargins(
+            design(24), design(24), design(24), design(32)
+        )
+        sidebar_layout.setSpacing(design(10))
         sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
         logo.setAlignment(Qt.AlignCenter)
-        logo.setFixedSize(232, 72)
+        logo.setFixedSize(design(232), design(72))
         logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
         if not os.path.exists(logo_path):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
         pixmap = QPixmap(logo_path)
         if not pixmap.isNull():
-            logo.setPixmap(pixmap.scaled(150, 72, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logo.setPixmap(pixmap.scaled(
+                design(150), design(72),
+                Qt.KeepAspectRatio, Qt.SmoothTransformation
+            ))
         sidebar_layout.addWidget(logo, 0, Qt.AlignCenter)
 
         company_name = QLabel("BLOOM FOOD")
         company_name.setObjectName("sidebar_company_name")
         company_name.setAlignment(Qt.AlignCenter)
-        company_name.setFixedHeight(24)
+        company_name.setFixedHeight(design(24))
         sidebar_layout.addWidget(company_name)
-        sidebar_layout.addSpacing(24)
+        sidebar_layout.addSpacing(design(24))
 
         self.btn_dashboard = QPushButton("Dashboard")
         self.btn_inventory = QPushButton("Inventory")
@@ -82,10 +94,9 @@ class MainWindow(QWidget):
         for button, (icon_name, _) in self.icon_files.items():
             button.setObjectName("sidebar_button")
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
-            button.setIconSize(QSize(20, 20))
+            button.setIconSize(QSize(design(20), design(20)))
             button.setCursor(Qt.PointingHandCursor)
-            button.setFixedHeight(56)
-            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            button.setFixedSize(design(232), design(56))
             button.setLayoutDirection(Qt.LeftToRight)
             sidebar_layout.addWidget(button, 0, Qt.AlignTop)
 
@@ -94,10 +105,9 @@ class MainWindow(QWidget):
         self.btn_exit = QPushButton("Logout")
         self.btn_exit.setObjectName("sidebar_logout_button")
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
-        self.btn_exit.setIconSize(QSize(20, 20))
+        self.btn_exit.setIconSize(QSize(design(20), design(20)))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
-        self.btn_exit.setFixedHeight(56)
-        self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.btn_exit.setFixedSize(design(232), design(56))
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
         sidebar_layout.addWidget(self.btn_exit, 0, Qt.AlignBottom)
 

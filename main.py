@@ -13,7 +13,9 @@ from ui.splash_screen import show_splash
 app = QApplication(sys.argv)
 app.setStyle("Fusion")
 app.setLayoutDirection(Qt.RightToLeft)
-app.setFont(QFont("Segoe UI", 10))
+
+# Use the Bloom Food UI font consistently across the application.
+app.setFont(QFont("Inter", 10))
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,7 +28,15 @@ with open(os.path.join(base_dir, "styles/ui_v2_components.qss"), "r", encoding="
 with open(os.path.join(base_dir, "styles/modern_inputs.qss"), "r", encoding="utf-8") as file:
     modern_input_styles = file.read()
 
-app.setStyleSheet(base_styles + "\n\n" + ui_v1_styles + "\n\n" + ui_v2_component_styles + "\n\n" + modern_input_styles)
+app.setStyleSheet(
+    base_styles
+    + "\n\n"
+    + ui_v1_styles
+    + "\n\n"
+    + ui_v2_component_styles
+    + "\n\n"
+    + modern_input_styles
+)
 
 # Startup flow: Splash -> Login -> Main Window.
 splash = show_splash(app)

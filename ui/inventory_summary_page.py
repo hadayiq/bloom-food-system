@@ -4,6 +4,8 @@ from PySide6.QtWidgets import (
     QLineEdit, QToolButton
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap, QIcon
+import os
 
 from database.transactions import TransactionRepository
 from database.products import ProductRepository
@@ -41,34 +43,43 @@ class InventorySummaryPage(QWidget):
         top_layout = QHBoxLayout(topbar)
         top_layout.setContentsMargins(16, 10, 16, 10)
         top_layout.setSpacing(12)
-        menu = QToolButton()
-        menu.setObjectName("topbar_menu")
-        menu.setText("☰")
-        menu.setCursor(Qt.PointingHandCursor)
+
         search = QLineEdit()
         search.setObjectName("topbar_search")
         search.setPlaceholderText("Search product, supplier, order")
         search.setClearButtonEnabled(True)
-        top_layout.addWidget(menu)
         top_layout.addWidget(search, 1)
         top_layout.addStretch(1)
+
+        avatar = QLabel()
+        avatar.setObjectName("topbar_avatar")
+        avatar.setFixedSize(36, 36)
+        avatar_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "icons", "abdelwahab_avatar.png")
+        avatar_pixmap = QPixmap(avatar_path)
+        if not avatar_pixmap.isNull():
+            avatar.setPixmap(avatar_pixmap.scaled(36, 36, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        avatar.setAlignment(Qt.AlignCenter)
+
+        profile_name = QLabel("ABDELWAHAB")
+        profile_name.setObjectName("topbar_profile_name")
         notification = QToolButton()
         notification.setObjectName("topbar_notification")
         notification.setText("♧")
         notification.setCursor(Qt.PointingHandCursor)
-        admin = QLabel("Admin  ▾")
-        admin.setObjectName("topbar_admin")
+
+        top_layout.addWidget(avatar)
+        top_layout.addWidget(profile_name)
         top_layout.addWidget(notification)
-        top_layout.addWidget(admin)
         main.addWidget(topbar)
 
-        header = QVBoxLayout()
+        header = QHBoxLayout()
         title = QLabel("Dashboard")
         title.setObjectName("dashboard_title")
-        subtitle = QLabel("نظرة عامة على المخزون والحركات")
-        subtitle.setObjectName("dashboard_subtitle")
+        welcome = QLabel("أهلاً عبدالوهاب")
+        welcome.setObjectName("dashboard_welcome")
         header.addWidget(title)
-        header.addWidget(subtitle)
+        header.addStretch(1)
+        header.addWidget(welcome)
         main.addLayout(header)
 
         cards = QHBoxLayout()
@@ -99,12 +110,12 @@ class InventorySummaryPage(QWidget):
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.verticalHeader().setVisible(False)
         self.table.verticalHeader().setDefaultSectionSize(44)
-        header = self.table.horizontalHeader()
-        header.setHighlightSections(False)
-        header.setStretchLastSection(True)
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        table_header = self.table.horizontalHeader()
+        table_header.setHighlightSections(False)
+        table_header.setStretchLastSection(True)
+        table_header.setSectionResizeMode(0, QHeaderView.Stretch)
         for i in range(1, 5):
-            header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
+            table_header.setSectionResizeMode(i, QHeaderView.ResizeToContents)
         self.table.cellClicked.connect(self.show_batch_breakdown)
         main.addWidget(self.table)
 

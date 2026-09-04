@@ -200,3 +200,30 @@ QFrame#transaction_card QDoubleSpinBox,
 QFrame#transaction_card QDateEdit {
     min-height: 38px;
 }
+
+/* Sidebar dimensions: final override loaded last. */
+QFrame#sidebar {
+    width: 218px;
+    min-width: 218px;
+    max-width: 218px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+}
+
+QPushButton#sidebar_button,
+QPushButton#sidebar_logout_button {
+    width: 218px;
+    min-width: 218px;
+    max-width: 218px;
+    min-height: 56px;
+    max-height: 56px;
+    border-radius: 8px;
+}
+
+QLabel#sidebar_logo {
+    width: 218px;
+    min-width: 218px;
+    max-width: 218px;
+}

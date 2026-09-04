@@ -1,8 +1,4 @@
-/* BLOOM FOOD — INPUT COMPONENTS
-   Reference: Bloom Food UI design guide
-   UI only — no business logic changes.
-*/
-
+/* BLOOM FOOD — INPUT COMPONENTS */
 QLineEdit,QComboBox,QSpinBox,QDoubleSpinBox,QDateEdit{background-color:#FFFFFF;color:#383E49;border:1px solid #D5D9E2;border-radius:8px;padding:7px 11px;min-height:36px;font-size:10pt;selection-background-color:#DCEBFF;selection-color:#383E49;}
 QTextEdit,QPlainTextEdit{background-color:#FFFFFF;color:#383E49;border:1px solid #D5D9E2;border-radius:8px;padding:9px 11px;min-height:88px;font-size:10pt;selection-background-color:#DCEBFF;selection-color:#383E49;}
 QLineEdit:hover,QComboBox:hover,QSpinBox:hover,QDoubleSpinBox:hover,QDateEdit:hover,QTextEdit:hover,QPlainTextEdit:hover{border:1px solid #B2D0FF;background-color:#FFFFFF;}
@@ -17,11 +13,11 @@ QSpinBox::up-button,QSpinBox::down-button,QDoubleSpinBox::up-button,QDoubleSpinB
 QLabel#input_hint{color:#858D9D;font-size:8.5pt;padding:2px 2px 0 2px;}
 QLabel#input_error{color:#F04438;font-size:8.5pt;font-weight:600;padding:3px 2px 0 2px;}
 QFrame#transaction_card QLineEdit,QFrame#transaction_card QComboBox,QFrame#transaction_card QSpinBox,QFrame#transaction_card QDoubleSpinBox,QFrame#transaction_card QDateEdit{min-height:38px;}
-
 QFrame#sidebar{background:#FFFFFF;width:218px;min-width:218px;max-width:218px;margin:0;padding:0;border:none;border-radius:0;}
-QWidget#sidebar_brand{background:transparent;}
-QLabel#sidebar_logo{background:transparent;}
-QPushButton#sidebar_button,QPushButton#sidebar_logout_button{background:transparent;color:#667085;border:none;border-radius:8px;min-height:44px;max-height:44px;padding:0 16px;text-align:left;font-size:10pt;font-weight:600;}
+QWidget#sidebar_brand{background:transparent;min-height:48px;}
+QLabel#sidebar_logo{background:transparent;min-width:40px;max-width:40px;min-height:48px;max-height:48px;}
+QLabel#sidebar_company_name{color:#1570EF;background:transparent;font-size:10pt;font-weight:700;padding:0;}
+QPushButton#sidebar_button,QPushButton#sidebar_logout_button{background:transparent;color:#667085;border:none;border-radius:0;min-height:44px;max-height:44px;padding:0 16px;text-align:left;font-size:10pt;font-weight:600;}
 QPushButton#sidebar_button:hover,QPushButton#sidebar_logout_button:hover{background:#F2F6FC;color:#1570EF;}
 QPushButton#sidebar_button[active="true"]{background:#E8F1FF;color:#1570EF;}
 QPushButton#sidebar_logout_button{color:#F04438;}

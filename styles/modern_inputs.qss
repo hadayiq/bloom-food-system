@@ -19,8 +19,9 @@ QLabel#input_error{color:#F04438;font-size:8.5pt;font-weight:600;padding:3px 2px
 QFrame#transaction_card QLineEdit,QFrame#transaction_card QComboBox,QFrame#transaction_card QSpinBox,QFrame#transaction_card QDoubleSpinBox,QFrame#transaction_card QDateEdit{min-height:38px;}
 
 QFrame#sidebar{background:#FFFFFF;width:218px;min-width:218px;max-width:218px;margin:0;padding:0;border:none;border-radius:0;}
-QLabel#sidebar_logo{background:transparent;width:218px;min-width:218px;max-width:218px;}
-QPushButton#sidebar_button,QPushButton#sidebar_logout_button{background:transparent;color:#667085;border:none;border-radius:8px;width:218px;min-width:218px;max-width:218px;min-height:56px;max-height:56px;padding:0 16px;text-align:left;font-size:10pt;font-weight:600;}
+QWidget#sidebar_brand{background:transparent;}
+QLabel#sidebar_logo{background:transparent;}
+QPushButton#sidebar_button,QPushButton#sidebar_logout_button{background:transparent;color:#667085;border:none;border-radius:8px;min-height:44px;max-height:44px;padding:0 16px;text-align:left;font-size:10pt;font-weight:600;}
 QPushButton#sidebar_button:hover,QPushButton#sidebar_logout_button:hover{background:#F2F6FC;color:#1570EF;}
 QPushButton#sidebar_button[active="true"]{background:#E8F1FF;color:#1570EF;}
 QPushButton#sidebar_logout_button{color:#F04438;}

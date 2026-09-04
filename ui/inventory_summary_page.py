@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QFrame, QHeaderView, QStyle, QPushButton, QScrollArea
+    QTableWidgetItem, QFrame, QHeaderView, QStyle, QPushButton, QScrollArea,
+    QLineEdit, QToolButton
 )
 from PySide6.QtCore import Qt
 
@@ -32,11 +33,37 @@ class InventorySummaryPage(QWidget):
 
         content = QWidget()
         main = QVBoxLayout(content)
-        main.setContentsMargins(35, 30, 35, 30)
+        main.setContentsMargins(35, 24, 35, 30)
         main.setSpacing(20)
 
+        topbar = QFrame()
+        topbar.setObjectName("dashboard_topbar")
+        top_layout = QHBoxLayout(topbar)
+        top_layout.setContentsMargins(16, 10, 16, 10)
+        top_layout.setSpacing(12)
+        menu = QToolButton()
+        menu.setObjectName("topbar_menu")
+        menu.setText("☰")
+        menu.setCursor(Qt.PointingHandCursor)
+        search = QLineEdit()
+        search.setObjectName("topbar_search")
+        search.setPlaceholderText("Search product, supplier, order")
+        search.setClearButtonEnabled(True)
+        top_layout.addWidget(menu)
+        top_layout.addWidget(search, 1)
+        top_layout.addStretch(1)
+        notification = QToolButton()
+        notification.setObjectName("topbar_notification")
+        notification.setText("♧")
+        notification.setCursor(Qt.PointingHandCursor)
+        admin = QLabel("Admin  ▾")
+        admin.setObjectName("topbar_admin")
+        top_layout.addWidget(notification)
+        top_layout.addWidget(admin)
+        main.addWidget(topbar)
+
         header = QVBoxLayout()
-        title = QLabel("Inventory Dashboard")
+        title = QLabel("Dashboard")
         title.setObjectName("dashboard_title")
         subtitle = QLabel("نظرة عامة على المخزون والحركات")
         subtitle.setObjectName("dashboard_subtitle")
@@ -89,14 +116,12 @@ class InventorySummaryPage(QWidget):
         self.detail_title = QLabel("تفاصيل الباتشات")
         self.detail_title.setObjectName("section_title")
         detail.addWidget(self.detail_title)
-
         detail_cards = QHBoxLayout()
         self.detail_total = self.make_small_card("إجمالي الصنف", "0.00")
         self.detail_batch_count = self.make_small_card("عدد الباتشات", "0")
         detail_cards.addWidget(self.detail_total[0])
         detail_cards.addWidget(self.detail_batch_count[0])
         detail.addLayout(detail_cards)
-
         self.batch_table = QTableWidget()
         self.batch_table.setObjectName("dashboard_batch_table")
         self.batch_table.setColumnCount(7)
@@ -111,19 +136,15 @@ class InventorySummaryPage(QWidget):
             bh.setSectionResizeMode(i, QHeaderView.ResizeToContents)
         self.batch_table.setMinimumHeight(150)
         detail.addWidget(self.batch_table)
-
         close = QPushButton("إخفاء تفاصيل الباتشات")
         close.setObjectName("secondary_button")
         close.clicked.connect(self.hide_batch_breakdown)
         detail.addWidget(close, alignment=Qt.AlignLeft)
-
         self.detail_frame.hide()
         main.addWidget(self.detail_frame)
         main.addStretch()
-
         self.scroll.setWidget(content)
         outer.addWidget(self.scroll)
-
         self.load_data()
         refresh_manager.data_changed.connect(self.load_data)
         refresh_manager.products_changed.connect(self.load_data)
@@ -201,7 +222,6 @@ class InventorySummaryPage(QWidget):
         self.detail_total[1].setText(f"{total_balance:,.2f}")
         self.detail_batch_count[1].setText(str(len(batches)))
         self.batch_table.setRowCount(len(batches))
-
         for r, batch in enumerate(batches):
             transactions = self.transaction_repo.get_transactions_by_product(product, batch["code"])
             normal_in = returns = out = 0.0
@@ -214,10 +234,7 @@ class InventorySummaryPage(QWidget):
                 else:
                     out += qty
             _, _, balance = self.transaction_repo.get_batch_balance(product, batch["code"])
-            values = [
-                batch["code"], batch["expiry_date"], f'{batch["opening_balance"]:,.2f}',
-                f"{normal_in:,.2f}", f"{returns:,.2f}", f"{out:,.2f}", f"{balance:,.2f}"
-            ]
+            values = [batch["code"], batch["expiry_date"], f'{batch["opening_balance"]:,.2f}', f"{normal_in:,.2f}", f"{returns:,.2f}", f"{out:,.2f}", f"{balance:,.2f}"]
             for c, value in enumerate(values):
                 item = QTableWidgetItem(str(value))
                 item.setTextAlignment(Qt.AlignCenter)

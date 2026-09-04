@@ -20,7 +20,7 @@ from utils.refresh_manager import refresh_manager
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bloom Food - Inventory System")
+        self.setWindowTitle("Bloom Food")
         self.resize(1440, 960)
         self.setMinimumSize(1200, 800)
         self.setLayoutDirection(Qt.LeftToRight)

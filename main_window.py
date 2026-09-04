@@ -41,34 +41,28 @@ class MainWindow(QWidget):
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(0, 24, 0, 32)
-        sidebar_layout.setSpacing(10)
+        sidebar_layout.setContentsMargins(0, 24, 0, 24)
+        sidebar_layout.setSpacing(8)
         sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         brand_row = QWidget()
         brand_row.setObjectName("sidebar_brand")
         brand_layout = QHBoxLayout(brand_row)
         brand_layout.setContentsMargins(16, 0, 16, 0)
-        brand_layout.setSpacing(8)
+        brand_layout.setSpacing(0)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
-        logo.setAlignment(Qt.AlignCenter)
-        logo.setFixedSize(38, 48)
+        logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        logo.setFixedSize(186, 52)
         logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
         if not os.path.exists(logo_path):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
         pixmap = QPixmap(logo_path)
         if not pixmap.isNull():
-            logo.setPixmap(pixmap.scaled(38, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-
-        company_name = QLabel("BLOOM FOOD")
-        company_name.setObjectName("sidebar_company_name")
-        company_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        company_name.setWordWrap(False)
-        brand_layout.addWidget(logo, 0, Qt.AlignVCenter)
-        brand_layout.addWidget(company_name, 1, Qt.AlignVCenter)
-        sidebar_layout.addWidget(brand_row)
+            logo.setPixmap(pixmap.scaled(186, 52, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        brand_layout.addWidget(logo, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        sidebar_layout.addWidget(brand_row, 0, Qt.AlignTop)
         sidebar_layout.addSpacing(24)
 
         self.btn_dashboard = QPushButton("Dashboard")

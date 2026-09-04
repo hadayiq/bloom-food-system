@@ -15,7 +15,7 @@ QLabel#input_error{color:#F04438;font-size:8.5pt;font-weight:600;padding:3px 2px
 QFrame#transaction_card QLineEdit,QFrame#transaction_card QComboBox,QFrame#transaction_card QSpinBox,QFrame#transaction_card QDoubleSpinBox,QFrame#transaction_card QDateEdit{min-height:38px;}
 QFrame#sidebar{background:#FFFFFF;width:244px;min-width:244px;max-width:244px;margin:0;padding:0;border:none;border-radius:0;}
 QWidget#sidebar_brand{background:transparent;min-height:58px;}
-QLabel#sidebar_logo{background:transparent;min-width:58px;max-width:58px;min-height:58px;max-height:58px;}
+QLabel#sidebar_logo{background:transparent;min-width:72px;max-width:72px;min-height:58px;max-height:58px;}
 QLabel#sidebar_company_name{color:#1570EF;background:transparent;font-size:10pt;font-weight:700;padding:0;}
 QToolButton#sidebar_button,QToolButton#sidebar_logout_button{background:transparent;color:#667085;border:none;border-radius:8px;min-height:44px;max-height:44px;padding:0 16px;text-align:left;font-size:10pt;font-weight:600;}
 QToolButton#sidebar_button:hover,QToolButton#sidebar_logout_button:hover{background:#F2F6FC;color:#1570EF;}

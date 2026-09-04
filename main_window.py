@@ -35,20 +35,20 @@ class MainWindow(QWidget):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(280)
+        sidebar.setFixedWidth(218)
         sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(24, 24, 24, 32)
+        sidebar_layout.setContentsMargins(0, 24, 0, 32)
         sidebar_layout.setSpacing(10)
         sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
         logo.setAlignment(Qt.AlignCenter)
-        logo.setFixedSize(232, 72)
+        logo.setFixedSize(218, 72)
         logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
         if not os.path.exists(logo_path):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
@@ -85,7 +85,7 @@ class MainWindow(QWidget):
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
             button.setIconSize(QSize(20, 20))
             button.setCursor(Qt.PointingHandCursor)
-            button.setFixedSize(232, 56)
+            button.setFixedSize(218, 56)
             button.setLayoutDirection(Qt.LeftToRight)
             sidebar_layout.addWidget(button, 0, Qt.AlignTop)
 
@@ -96,7 +96,7 @@ class MainWindow(QWidget):
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
         self.btn_exit.setIconSize(QSize(20, 20))
         self.btn_exit.setCursor(Qt.PointingHandCursor)
-        self.btn_exit.setFixedSize(232, 56)
+        self.btn_exit.setFixedSize(218, 56)
         self.btn_exit.setLayoutDirection(Qt.LeftToRight)
         sidebar_layout.addWidget(self.btn_exit, 0, Qt.AlignBottom)
 

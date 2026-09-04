@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QToolButton
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap
 import os
 
 from database.transactions import TransactionRepository
@@ -40,6 +40,7 @@ class InventorySummaryPage(QWidget):
 
         topbar = QFrame()
         topbar.setObjectName("dashboard_topbar")
+        topbar.setLayoutDirection(Qt.LeftToRight)
         top_layout = QHBoxLayout(topbar)
         top_layout.setContentsMargins(16, 10, 16, 10)
         top_layout.setSpacing(12)
@@ -73,6 +74,7 @@ class InventorySummaryPage(QWidget):
         main.addWidget(topbar)
 
         header = QHBoxLayout()
+        header.setDirection(QHBoxLayout.LeftToRight)
         title = QLabel("Dashboard")
         title.setObjectName("dashboard_title")
         welcome = QLabel("أهلاً عبدالوهاب")

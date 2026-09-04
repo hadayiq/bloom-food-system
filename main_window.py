@@ -41,14 +41,14 @@ class MainWindow(QWidget):
         self.sidebar = sidebar
 
         sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(16, 24, 16, 32)
+        sidebar_layout.setContentsMargins(0, 24, 0, 32)
         sidebar_layout.setSpacing(10)
         sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         brand_row = QWidget()
         brand_row.setObjectName("sidebar_brand")
         brand_layout = QHBoxLayout(brand_row)
-        brand_layout.setContentsMargins(0, 0, 0, 0)
+        brand_layout.setContentsMargins(16, 0, 16, 0)
         brand_layout.setSpacing(8)
 
         logo = QLabel()

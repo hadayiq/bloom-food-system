@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel, QFrame,
-    QStackedWidget, QSizePolicy, QMessageBox, QBoxLayout,
+    QStackedWidget, QSizePolicy, QMessageBox, QBoxLayout, QToolButton,
 )
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtCore import Qt, QSize
@@ -35,7 +35,7 @@ class MainWindow(QWidget):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(218)
+        sidebar.setFixedWidth(244)
         sidebar.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         sidebar.setLayoutDirection(Qt.LeftToRight)
         self.sidebar = sidebar
@@ -43,34 +43,44 @@ class MainWindow(QWidget):
         sidebar_layout = QVBoxLayout(sidebar)
         sidebar_layout.setContentsMargins(0, 24, 0, 24)
         sidebar_layout.setSpacing(8)
-        sidebar_layout.setDirection(QBoxLayout.TopToBottom)
 
         brand_row = QWidget()
-        brand_row.setObjectName("sidebar_brand")
         brand_layout = QHBoxLayout(brand_row)
         brand_layout.setContentsMargins(16, 0, 16, 0)
-        brand_layout.setSpacing(0)
+        brand_layout.setSpacing(8)
 
         logo = QLabel()
         logo.setObjectName("sidebar_logo")
-        logo.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        logo.setFixedSize(186, 52)
+        logo.setAlignment(Qt.AlignCenter)
+        logo.setFixedSize(58, 58)
         logo_path = os.path.join(icons_dir, "bloomfood_logo.png")
         if not os.path.exists(logo_path):
             logo_path = os.path.join(icons_dir, "bloom_logo.png")
         pixmap = QPixmap(logo_path)
         if not pixmap.isNull():
-            logo.setPixmap(pixmap.scaled(186, 52, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        brand_layout.addWidget(logo, 0, Qt.AlignLeft | Qt.AlignVCenter)
+            logo.setPixmap(pixmap.scaled(58, 58, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+        company_name = QLabel("BLOOM FOOD")
+        company_name.setObjectName("sidebar_company_name")
+        company_name.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        company_name.setWordWrap(False)
+        brand_layout.addWidget(logo, 0, Qt.AlignVCenter)
+        brand_layout.addWidget(company_name, 1, Qt.AlignVCenter)
         sidebar_layout.addWidget(brand_row, 0, Qt.AlignTop)
         sidebar_layout.addSpacing(24)
 
-        self.btn_dashboard = QPushButton("Dashboard")
-        self.btn_inventory = QPushButton("Inventory")
-        self.btn_reports = QPushButton("Reports")
-        self.btn_product = QPushButton("Product")
-        self.btn_subinventory = QPushButton("Subinventory")
-        self.btn_orders = QPushButton("Orders")
+        self.btn_dashboard = QToolButton()
+        self.btn_dashboard.setText("Dashboard")
+        self.btn_inventory = QToolButton()
+        self.btn_inventory.setText("Inventory")
+        self.btn_reports = QToolButton()
+        self.btn_reports.setText("Reports")
+        self.btn_product = QToolButton()
+        self.btn_product.setText("Product")
+        self.btn_subinventory = QToolButton()
+        self.btn_subinventory.setText("Subinventory")
+        self.btn_orders = QToolButton()
+        self.btn_orders.setText("Orders")
 
         self.icon_files = {
             self.btn_dashboard: ("dashboard.svg", "dashboard_active.svg"),
@@ -85,6 +95,8 @@ class MainWindow(QWidget):
             button.setObjectName("sidebar_button")
             button.setIcon(QIcon(os.path.join(icons_dir, icon_name)))
             button.setIconSize(QSize(18, 18))
+            button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            button.setAutoRaise(True)
             button.setCursor(Qt.PointingHandCursor)
             button.setFixedHeight(44)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -93,10 +105,13 @@ class MainWindow(QWidget):
 
         sidebar_layout.addStretch(1)
 
-        self.btn_exit = QPushButton("Logout")
+        self.btn_exit = QToolButton()
+        self.btn_exit.setText("Logout")
         self.btn_exit.setObjectName("sidebar_logout_button")
         self.btn_exit.setIcon(QIcon(os.path.join(icons_dir, "sidebar_logout.svg")))
         self.btn_exit.setIconSize(QSize(18, 18))
+        self.btn_exit.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.btn_exit.setAutoRaise(True)
         self.btn_exit.setCursor(Qt.PointingHandCursor)
         self.btn_exit.setFixedHeight(44)
         self.btn_exit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
